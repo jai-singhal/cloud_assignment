@@ -12,8 +12,8 @@ def getSingletonKeyPair(line):
     return key, val
 
 new_line_count = 0
-with open("amazon-meta.txt", "r", encoding="utf-8") as fin:
-    with open("amazon-meta-processed.txt", "w", encoding= "utf-8") as fout:
+with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
+    with open("data/amazon-meta-processed.txt", "w", encoding= "utf-8") as fout:
         product = {}
         while True:
             line = fin.readline()
