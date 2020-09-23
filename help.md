@@ -12,6 +12,7 @@ Mapper 1:
 example:
 (review.cust) : salesrank
 
+
 Reducer 1:
 groups
 

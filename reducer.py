@@ -1,48 +1,149 @@
 #!/usr/bin/env python
 """reducer.py"""
 
-import os
-import pickle
-import re
-import sys
 from operator import itemgetter
+import sys
 
-current_group = None
-current_group_count = 0
-word = None
+current_columns = None
+minval = -sys.maxsize - 1
+minval = sys.maxsize 
+current_max = minval
+current_min = maxval
+columns = None
+fun = 'MAX' #to be changed later, pass as arg
+x = 5 #to be changed later, pass as arg
 
-# sys args = [func, col1, op, x]
 
+if fun=='MAX':
 # input comes from STDIN
-for line in sys.stdin:
-    product = pickle.loads(line.strip(), encoding="UTF-8")
-    # parse the input we got from mapper.py
-    count = product["count"]
+    for line in sys.stdin:
+        # remove leading and trailing whitespace
+        line = line.strip()
 
-    # get col1 from sys.arg
-    col1 = sys.argv[1] # list of cols which want to group
-    group = []
-    for col in col1:
-        group.append(product["col"])
-        
-    # this IF-switch only works because Hadoop sorts map output
-    # by key (here: word) before it is passed to the reducer
-    if current_group == group:
-        current_group_count += count
-    else:
-        if current_group:
-            product["count"] = current_group_count
-            product_pickled = pickle.dumps(product)
-            # write result to STDOUT
-            print(product_pickled)
-        current_group_count = count
-        current_group = group
+        columns, column1 = line.split('\t', 1)
+        column1= column1.strip(' {}')
 
-# # do not forget to output the last word if needed!
-# if current_group == word:
-#     print(product)
+        try:
+            column1 = int(column1)
+        except ValueError:
+            continue
 
-{"njas": sajh ...}\n
-{"njas": sajh ...}\n
-{"njas": sajh ...}\n
+        # this IF-switch only works because Hadoop sorts map output
+        # by key (here: word) before it is passed to the reducer
+        if not current_columns:
+            current_columns=columns
 
+        if current_columns == cols:
+            current_max= max(current_max, column1)
+
+        else:
+            if current_max > x:
+                result = [current_columns, current_max]
+                print("\t".join(str(v) for v in result))
+
+            current_max = minval
+            current_columns = columns
+
+    # do not forget to output the last word if needed!
+    if current_columns == columns:
+        if current_max > x:
+                result = [current_columns, current_max]
+                print("\t".join(str(v) for v in result))
+
+
+elif fun=='MIN':
+
+    for line in sys.stdin:
+        line = line.strip()
+        columns, column1 = line.split('\t', 1)
+        column1= column1.strip(' {}')
+        try:
+            column1 = int(column1)
+        except ValueError:
+            continue
+
+        if not current_columns:
+            current_columns=columns
+
+        if current_columns == cols:
+            current_min= min(current_min, column1)
+
+        else:
+            if current_min > x:
+                result = [current_columns, current_min]
+                print("\t".join(str(v) for v in result))
+
+            current_min = maxval
+            current_columns = columns
+
+    # do not forget to output the last word if needed!
+    if current_columns == columns:
+        if current_min > x:
+                result = [current_columns, current_min]
+                print("\t".join(str(v) for v in result))
+
+elif fun=='SUM':
+    sumval=0
+
+    for line in sys.stdin:
+        line = line.strip()
+        columns, column1 = line.split('\t', 1)
+        column1= column1.strip(' {}')
+        try:
+            column1 = int(column1)
+        except ValueError:
+            continue
+
+        if not current_columns:
+            current_columns=columns
+
+        if current_columns == cols:
+            sumval= sumval+column1
+
+        else:
+            if sumval > x:
+                result = [current_columns, sumval]
+                print("\t".join(str(v) for v in result))
+
+            sumval = 0
+            current_columns = columns
+
+    # do not forget to output the last word if needed!
+    if current_columns == columns:
+        if sumval > x:
+                result = [current_columns, sumval]
+                print("\t".join(str(v) for v in result))
+
+elif fun=='COUNT':
+    sumval=0
+
+    for line in sys.stdin:
+        line = line.strip()
+        columns, column1 = line.split('\t', 1)
+        column1= column1.strip(' {}')
+        try:
+            column1 = int(column1)
+        except ValueError:
+            continue
+
+        if not current_columns:
+            current_columns=columns
+
+        if current_columns == cols:
+            sumval= sumval +1
+
+        else:
+            if sumval > x:
+                result = [current_columns, sumval]
+                print("\t".join(str(v) for v in result))
+
+            sumval = 0
+            current_columns = columns
+
+    # do not forget to output the last word if needed!
+    if current_columns == columns:
+        if sumval > x:
+                result = [current_columns, sumval]
+                print("\t".join(str(v) for v in result))
+
+    
