@@ -22,8 +22,8 @@ str({'key': ['Book'], 'value': '277409'}),
 str({'key': ['Music'], 'value': '5392'}),
 
 ]
-fun = upper(sys.argv[1])
-x = sys.argv[2]
+fun = sys.argv[1].upper()
+x = int(sys.argv[2])
 
 if fun=='MAX':
 # input comes from STDIN
@@ -105,6 +105,7 @@ elif fun=='SUM':
     for line in sys.stdin:
         line = line.strip()
         line=ast.literal_eval(line)
+        # print(line)
         columns,column1 = line['key'],line['value']
         #columns, column1 = line.split('\t', 1)
         #column1= column1.strip(' {}')

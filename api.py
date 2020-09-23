@@ -41,7 +41,6 @@ async def main(query: Query):
     def get_select_cols(select_cols):
         select_cols_parsed = []
         aggregate_fns = {}
-        print(select_cols)
         for s_col in select_cols:
             for k, v in s_col.items():
                 if isinstance(v, dict):
@@ -55,7 +54,6 @@ async def main(query: Query):
         return (select_cols_parsed, aggregate_fns)        
         
     def get_mapper_test_cmd(parsed):
-        print(parsed["select"])
         select_cols, agg_fn = get_select_cols(parsed["select"])
         select_cols_pickle = binascii.hexlify(pickle.dumps(select_cols)).decode()
         return f"cat data/test.txt", f"""python3 mapper.py {select_cols_pickle} {parsed["from"]} {agg_fn["col"]}"""
@@ -63,9 +61,11 @@ async def main(query: Query):
     def get_reducer_test_cmd(parsed, map_out):
         select_cols, agg_fn = get_select_cols(parsed["select"])
         X = parsed["having"]["gt"][1]
-        return f"""echo {map_out}""",  f"""python3 reducer.py {agg_fn["fun"]} {X}"""
+        return f"""python3 reducer.py {agg_fn["fun"]} {X}"""
         
     parsed = parse(query.q)
+    
+    ## mapper
     mapper_cmd1, mapper_cmd2  = get_mapper_test_cmd(parsed)
     map_process_temp = Popen(mapper_cmd1.split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
     map_pipe_process = Popen(mapper_cmd2.split(" "), stdin=map_process_temp.stdout, stdout=PIPE)
@@ -73,17 +73,17 @@ async def main(query: Query):
 
     mapper_output, err = map_pipe_process.communicate()
     rc_m = map_pipe_process.returncode
+    mapper_output_decoded = mapper_output.decode()
+    print(mapper_output_decoded)
     
     ## reducer
-    reducer_cmd1, reducer_cmd2 = get_reducer_test_cmd(parsed, mapper_output)
-    reducer_process_tmp = Popen(reducer_cmd1.split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    reducer_pipe_process = Popen(reducer_cmd2.split(" "), stdin=reducer_process_tmp.stdout, stdout=PIPE)
+    reducer_cmd = get_reducer_test_cmd(parsed, mapper_output)
+    reducer_pipe_process = Popen(reducer_cmd.split(" "), stdin=map_pipe_process.stdout, stdout=PIPE)
     
-    reducer_process_tmp.stdout.close() 
     reducer_output, err = reducer_pipe_process.communicate()
     rc_r = reducer_pipe_process.returncode
     
     return {
         "reducer_output": reducer_output, 
-        "mapper_output": mapper_output
+        "mapper_output": mapper_output_decoded
     }
