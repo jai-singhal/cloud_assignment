@@ -3,6 +3,7 @@
 
 from operator import itemgetter
 import sys
+import ast
 
 current_columns = None
 minval = -sys.maxsize - 1
@@ -20,8 +21,10 @@ if fun=='MAX':
         # remove leading and trailing whitespace
         line = line.strip()
 
-        columns, column1 = line.split('\t', 1)
-        column1= column1.strip(' {}')
+        line=ast.literal_eval(line)
+        columns,column1 = line['key'],line['value']
+        #columns, column1 = line.split('\t', 1)
+        #column1= column1.strip(' {}')
 
         try:
             column1 = int(column1)
@@ -55,8 +58,10 @@ elif fun=='MIN':
 
     for line in sys.stdin:
         line = line.strip()
-        columns, column1 = line.split('\t', 1)
-        column1= column1.strip(' {}')
+        line=ast.literal_eval(line)
+        columns,column1 = line['key'],line['value']
+        #columns, column1 = line.split('\t', 1)
+        #column1= column1.strip(' {}')
         try:
             column1 = int(column1)
         except ValueError:
@@ -87,8 +92,10 @@ elif fun=='SUM':
 
     for line in sys.stdin:
         line = line.strip()
-        columns, column1 = line.split('\t', 1)
-        column1= column1.strip(' {}')
+        line=ast.literal_eval(line)
+        columns,column1 = line['key'],line['value']
+        #columns, column1 = line.split('\t', 1)
+        #column1= column1.strip(' {}')
         try:
             column1 = int(column1)
         except ValueError:
@@ -119,8 +126,10 @@ elif fun=='COUNT':
 
     for line in sys.stdin:
         line = line.strip()
-        columns, column1 = line.split('\t', 1)
-        column1= column1.strip(' {}')
+        line=ast.literal_eval(line)
+        columns,column1 = line['key'],line['value']
+        #columns, column1 = line.split('\t', 1)
+        #column1= column1.strip(' {}')
         try:
             column1 = int(column1)
         except ValueError:
