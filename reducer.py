@@ -10,8 +10,8 @@ minval = sys.maxsize
 current_max = minval
 current_min = maxval
 columns = None
-fun = 'MAX' #to be changed later
-x = 5 #to be changed later
+fun = 'MAX' #to be changed later, pass as arg
+x = 5 #to be changed later, pass as arg
 
 
 if fun=='MAX':
@@ -21,6 +21,7 @@ if fun=='MAX':
         line = line.strip()
 
         columns, column1 = line.split('\t', 1)
+        column1= column1.strip(' {}')
 
         try:
             column1 = int(column1)
@@ -55,7 +56,7 @@ elif fun=='MIN':
     for line in sys.stdin:
         line = line.strip()
         columns, column1 = line.split('\t', 1)
-
+        column1= column1.strip(' {}')
         try:
             column1 = int(column1)
         except ValueError:
@@ -87,7 +88,7 @@ elif fun=='SUM':
     for line in sys.stdin:
         line = line.strip()
         columns, column1 = line.split('\t', 1)
-
+        column1= column1.strip(' {}')
         try:
             column1 = int(column1)
         except ValueError:
@@ -119,7 +120,7 @@ elif fun=='COUNT':
     for line in sys.stdin:
         line = line.strip()
         columns, column1 = line.split('\t', 1)
-
+        column1= column1.strip(' {}')
         try:
             column1 = int(column1)
         except ValueError:
