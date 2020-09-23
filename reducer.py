@@ -11,12 +11,24 @@ maxval = sys.maxsize
 current_max = minval
 current_min = maxval
 columns = None
-fun = 'MAX' #to be changed later, pass as arg
-x = 5 #to be changed later, pass as arg
+liss= [
+    str({'key': ['Book'], 'value': '396585'}),
+str({'key': ['Book'], 'value': '168596'}),
+str({'key': ['Book'], 'value': '1270652'}),
+str({'key': ['Book'], 'value': '631289'}),
+str({'key': ['Book'], 'value': '455160'}),
+str({'key': ['Book'], 'value': '188784'}),
+str({'key': ['Book'], 'value': '277409'}),
+str({'key': ['Music'], 'value': '5392'}),
+
+]
+fun = upper(sys.argv[1])
+x = sys.argv[2]
 
 if fun=='MAX':
 # input comes from STDIN
-    for line in sys.stdin:
+    for line in liss:
+    #for line in sys.stdin:
 
         # remove leading and trailing whitespace
         line = line.strip()
