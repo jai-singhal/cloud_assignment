@@ -38,7 +38,7 @@ source .venv/bin/activate
 
 ### Install requirements
 ```
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 #### Linux 
@@ -48,6 +48,7 @@ pip3 install -r requirements.txt
 ```
 
 ## Running the API server
+
 ```
 uvicorn api:app --reload
 ```
