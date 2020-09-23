@@ -1,0 +1,6 @@
+fastapi==0.61.1
+mo-future==3.89.20246
+moz-sql-parser==3.32.20026
+pydantic==1.6.1
+pyparsing==2.3.1
+starlette==0.13.6
