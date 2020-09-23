@@ -4,7 +4,9 @@ import re
 import json
 import os
 from moz_sql_parser import parse
-# app = FastAPI()
+
+app = FastAPI()
+
 # uvicorn main:app --reload
 query = """
 SELECT abc, def, sum(xyx)
