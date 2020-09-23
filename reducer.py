@@ -7,17 +7,17 @@ import ast
 
 current_columns = None
 minval = -sys.maxsize - 1
-minval = sys.maxsize 
+maxval = sys.maxsize 
 current_max = minval
 current_min = maxval
 columns = None
 fun = 'MAX' #to be changed later, pass as arg
 x = 5 #to be changed later, pass as arg
 
-
 if fun=='MAX':
 # input comes from STDIN
     for line in sys.stdin:
+
         # remove leading and trailing whitespace
         line = line.strip()
 
@@ -36,7 +36,7 @@ if fun=='MAX':
         if not current_columns:
             current_columns=columns
 
-        if current_columns == cols:
+        if current_columns == columns:
             current_max= max(current_max, column1)
 
         else:
@@ -70,7 +70,7 @@ elif fun=='MIN':
         if not current_columns:
             current_columns=columns
 
-        if current_columns == cols:
+        if current_columns == columns:
             current_min= min(current_min, column1)
 
         else:
@@ -104,7 +104,7 @@ elif fun=='SUM':
         if not current_columns:
             current_columns=columns
 
-        if current_columns == cols:
+        if current_columns == columns:
             sumval= sumval+column1
 
         else:
@@ -138,7 +138,7 @@ elif fun=='COUNT':
         if not current_columns:
             current_columns=columns
 
-        if current_columns == cols:
+        if current_columns == columns:
             sumval= sumval +1
 
         else:
