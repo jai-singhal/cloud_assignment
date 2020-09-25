@@ -7,9 +7,21 @@
 pip install virtualenv
 ```
 
+#### Linux 
+
+```
+pip3 install virtualenv
+```
+
 ### Create it
 ```
 virtualenv .venv
+```
+
+#### Linux 
+
+```
+virtualenv -p python3 .venv
 ```
 
 ### Activate it
@@ -17,12 +29,26 @@ virtualenv .venv
 .\venv\Scripts\activate
 ```
 
+#### Linux 
+
+```
+source .venv/bin/activate
+```
+
+
 ### Install requirements
 ```
-pip install requirements.txt
+pip install -r requirements.txt
+```
+
+#### Linux 
+
+```
+pip3 install -r requirements.txt
 ```
 
 ## Running the API server
+
 ```
-uvicorn main:app --reload
+uvicorn api:app --reload
 ```

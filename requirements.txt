@@ -1,6 +1,14 @@
+click==7.1.2
+dataclasses==0.7
 fastapi==0.61.1
+h11==0.9.0
+httptools==0.1.1
 mo-future==3.89.20246
 moz-sql-parser==3.32.20026
+pkg-resources==0.0.0
 pydantic==1.6.1
 pyparsing==2.3.1
 starlette==0.13.6
+uvicorn==0.11.8
+uvloop==0.14.0
+websockets==8.1
