@@ -17,7 +17,6 @@ with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
         product = {}
         while True:
             line = fin.readline()
-            
             if new_line_count > 2:
                 break
             
@@ -35,12 +34,13 @@ with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
                 if re.match(r".*:.*", line):
                     key, val = getSingletonKeyPair(line)
                     if key in single_value_keys:
-                        product[key] = val
+                        product[key.lower()] = val
                     if key == "similar":
                         product[key] = [
-                            val.strip() for val in val.split(" ")[1:] if len(val) > 0
-                        ]
-                    if key == "categories":
+                            {"asin": val.strip() } 
+                                for val in val.split(" ")[1:] if len(val) > 0
+                            ]
+                    elif key == "categories":
                         product[key] = []
                         for i in range(int(val)):
                             categories = re.findall(r"\|(\w*)\[(\d+)\]", fin.readline().strip())
@@ -49,13 +49,13 @@ with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
                             for type_, cat_id in categories:
                                 cat_arr.append({
                                     "index": index,
-                                    "type": type_,
-                                    "cid": cat_id
+                                    "category_name": type_,
+                                    "category_id": cat_id
                                 })
                                 index += 1
                             product[key].append(cat_arr)  
                          
-                    if key == "reviews":
+                    elif key == "reviews":
                         # reviews: total: 2  downloaded: 2  avg rating: 5
                         total, downloaded, avg_rating = re.findall(r"\d*\.\d+|\d+", val.strip())
                         product["reviews"] = {
