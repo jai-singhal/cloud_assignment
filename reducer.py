@@ -4,6 +4,7 @@
 from operator import itemgetter
 import sys
 import ast
+from operator import lt,gt,eq,le,ge
 
 current_columns = None
 minval = -sys.maxsize - 1
@@ -28,6 +29,21 @@ list1= []
 
 fun = sys.argv[1].upper()
 x = int(sys.argv[2])
+operation=sys.argv[3].lower()
+if operation=="lt":
+    sign = lt
+elif operation=="gt":
+    sign = gt
+elif operation=="eq":
+    sign = eq
+elif operation == "le":
+    sign = le
+elif operation=="ge":
+    sign = ge
+else:
+    print("Invalid comparison operator provided. Using \"greater than\" as default.")
+    sign = gt
+
 
 for line in sys.stdin:
     line1 = line.strip()
@@ -60,7 +76,7 @@ if fun=='MAX':
             current_max= max(current_max, column1)
 
         else:
-            if current_max > x:
+            if sign(current_max, x):
                 result = [current_columns, current_max]
                 print("\t".join(str(v).strip(' []') for v in result))
 
@@ -69,7 +85,7 @@ if fun=='MAX':
 
     # do not forget to output the last word if needed!
     if current_columns == columns:
-        if current_max > x:
+        if sign(current_max, x):
                 result = [current_columns, current_max]
                 print("\t".join(str(v).strip(' []') for v in result))
 
@@ -92,7 +108,7 @@ elif fun=='MIN':
             current_min= min(current_min, column1)
 
         else:
-            if current_min > x:
+            if sign(current_min, x):
                 result = [current_columns, current_min]
                 print("\t".join(str(v).strip(' []') for v in result))
 
@@ -101,7 +117,7 @@ elif fun=='MIN':
 
     # do not forget to output the last word if needed!
     if current_columns == columns:
-        if current_min > x:
+        if sign(current_min, x):
                 result = [current_columns, current_min]
                 print("\t".join(str(v).strip(' []') for v in result))
 
@@ -125,7 +141,7 @@ elif fun=='SUM':
             sumval= sumval+column1
 
         else:
-            if sumval > x:
+            if sign(sumval, x):
                 result = [current_columns, sumval]
                 print("\t".join(str(v).strip(' []') for v in result))
 
@@ -134,7 +150,7 @@ elif fun=='SUM':
 
     # do not forget to output the last word if needed!
     if current_columns == columns:
-        if sumval > x:
+        if sign(sumval, x):
                 result = [current_columns, sumval]
                 print("\t".join(str(v).strip(' []') for v in result))
 
@@ -158,7 +174,7 @@ elif fun=='COUNT':
             sumval= sumval +1
 
         else:
-            if sumval > x:
+            if sign(sumval, x):
                 result = [current_columns, sumval]
                 print("\t".join(str(v).strip(' []') for v in result))
 
@@ -167,7 +183,7 @@ elif fun=='COUNT':
 
     # do not forget to output the last word if needed!
     if current_columns == columns:
-        if sumval > x:
+        if sign(sumval, x):
                 result = [current_columns, sumval]
                 print("\t".join(str(v).strip(' []') for v in result))
 
