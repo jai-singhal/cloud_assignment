@@ -2,30 +2,28 @@ import json
 import os
 import pickle
 import re
+from subprocess import PIPE, Popen
 
 from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from subprocess import Popen, PIPE
 from fastapi.responses import HTMLResponse
-from utils import *
+from fastapi.templating import Jinja2Templates
 from moz_sql_parser import parse
+from pydantic import BaseModel
+from pyspark import SparkConf, SparkContext
+from mapper import Mapper
+from utils import *
+
+"""
+SELECT <COLUMNS>, FUNC(COLUMN1)
+FROM <TABLE>
+WHERE <COLUMN1> = Y
+GROUP BY <COLUMNS>
+HAVING FUNC(COLUMN1)>X
+--Here FUNC can be COUNT, MAX, MIN, SUM
+""" 
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-# uvicorn main:app --reload
-query = """
-SELECT group, sum(salesrank)
-FROM products
-GROUP BY group
-HAVING sum(salesrank)>10
-""" 
-# {"select": [{"value": "abc"}, {"value": "def"}, {"value": {"sum": "xyx"}}], "from": "reviews", 
-#  "groupby": [{"value": "abc"}, {"value": "def"}], "having": {"gt": [{"sum": "xyx"}, 10]}}
-'''
- select user_id, COUNT(votes) from reviews WHERE user_id == 'A2CXT3A901DGMP'  group by user_id HAVING COUNT(votes) > 2;
-'''
-   
 
 class Query(BaseModel):
     q: str
@@ -34,12 +32,20 @@ class Query(BaseModel):
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
+import random
 @app.post("/run/sql/spark")
 async def spark_post(query: Query):
     parsed = parse(query.q)
     print(parsed)
-    mapper_cmd  = get_mapper_args(parsed)
+    sc = SparkContext("local","PySpark sql run")
+    data = sc.textFile("data/test.txt")
+    m = Mapper(*get_mapper_args(parsed))
+    sparkmapp = data.map(lambda line: m.run_spark(line)).reduceByKey(lambda a, b: a+b)
+    res = sparkmapp.collect()
+    # wordCounts = data.map()
+    return {
+        "out": res,
+    }
 
 
 @app.post("/run/sql/map_reduce")

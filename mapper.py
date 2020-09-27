@@ -105,6 +105,20 @@ class Mapper():
             res = self.generate_key_val_pair(product)
             if res: print(res)
 
+    def run_spark(self, product): 
+        product = product.strip()
+        product = json.loads(product)
+        res = self.generate_key_val_pair(product)
+        
+        import hashlib
+
+        if res:
+            m = hashlib.sha1()
+            for key in res["key"]:
+                m.update(key)
+            return (m.hexdigest(), int(res["value"]))
+        return (hashlib.sha1("none".encode()).hexdigest(), 0)
+
 if __name__ == "__main__":
     SELECT_COLUMNS = pickle.loads(binascii.unhexlify(sys.argv[1].encode()))
     TABLE_NAME = sys.argv[2].strip()
