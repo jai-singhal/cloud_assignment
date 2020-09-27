@@ -1,4 +1,3 @@
-import binascii
 import json
 import os
 import pickle
@@ -9,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from subprocess import Popen, PIPE
 from fastapi.responses import HTMLResponse
-
+from utils import *
 from moz_sql_parser import parse
 
 app = FastAPI()
@@ -26,6 +25,7 @@ HAVING sum(salesrank)>10
 '''
  select user_id, COUNT(votes) from reviews WHERE user_id == 'A2CXT3A901DGMP'  group by user_id HAVING COUNT(votes) > 2;
 '''
+   
 
 class Query(BaseModel):
     q: str
@@ -35,8 +35,15 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@app.post("/run/sql")
-async def main(query: Query):
+@app.post("/run/sql/spark")
+async def spark_post(query: Query):
+    parsed = parse(query.q)
+    print(parsed)
+    mapper_cmd  = get_mapper_args(parsed)
+
+
+@app.post("/run/sql/map_reduce")
+async def map_reduce_post(query: Query):
     def get_cmd():
         MAP_REDUCE_CMD = """
             hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar 
@@ -47,54 +54,16 @@ async def main(query: Query):
             -input data/amazon-meta-processed.txt
             -output /user/hduser/gutenberg-output/r
         """
-    def get_select_cols(select_cols):
-        select_cols_parsed = []
-        aggregate_fns = {}
-        for s_col in select_cols:
-            for k, v in s_col.items():
-                if isinstance(v, dict):
-                    for v1, v2 in v.items():
-                        aggregate_fns = {
-                            "fun": v1,
-                            "col": v2,
-                        }
-                else:
-                    select_cols_parsed.append(v)
-        return (select_cols_parsed, aggregate_fns)        
-    
-    def get_where_cond(parsed):
-        (cond, colval), = parsed.items()
-        col1 = colval[0]
-        val = colval[1]
-        if isinstance(val, dict):
-            if "literal" in val.keys():
-                val = val["literal"]
-        return [cond, col1, val]
-    
-    def get_mapper_test_cmd(parsed):
-        select_cols, agg_fn = get_select_cols(parsed["select"])
-        select_cols_p = binascii.hexlify(pickle.dumps(select_cols)).decode()
-        where_cl = get_where_cond(parsed["where"])
-
-        return (
-        f"cat data/test.txt", 
-        f"""python3 mapper.py {select_cols_p} {parsed["from"]} {agg_fn["col"]} {where_cl[0]} {where_cl[1]} {where_cl[2]}"""
-        )
-        
-    def get_reducer_test_cmd(parsed, map_out):
-        
-        select_cols, agg_fn = get_select_cols(parsed["select"])
-        (op, op_val), = parsed["having"].items()
-        X = op_val[1]
-        to_return = f"""python3 reducer.py {agg_fn["fun"]} {X} {op}"""
-        return to_return
-    
+   
     parsed = parse(query.q)
     print(parsed)
     ## mapper
-    mapper_cmd1, mapper_cmd2  = get_mapper_test_cmd(parsed)
-    map_process_temp = Popen(mapper_cmd1.split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    map_pipe_process = Popen(mapper_cmd2.split(" "), stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
+    mapper_cmd = ["python3", "mapper.py"]
+    for arg in get_mapper_args(parsed): mapper_cmd.append(arg)
+    
+    map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    print(map_process_temp.stdout)
+    map_pipe_process = Popen(mapper_cmd, stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
     mapper_output, err = map_pipe_process.communicate()
     map_process_temp.stdout.close() 
@@ -128,5 +97,3 @@ async def main(query: Query):
         "mapper_output": mapper_output_decoded,
         "reducer_output": reducer_output.decode()
     }
-
-
