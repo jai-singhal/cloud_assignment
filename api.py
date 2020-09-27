@@ -21,7 +21,9 @@ HAVING sum(salesrank)>10
 """ 
 # {"select": [{"value": "abc"}, {"value": "def"}, {"value": {"sum": "xyx"}}], "from": "reviews", 
 #  "groupby": [{"value": "abc"}, {"value": "def"}], "having": {"gt": [{"sum": "xyx"}, 10]}}
-
+'''
+ select user_id, COUNT(votes) from reviews WHERE user_id == 'A2CXT3A901DGMP'  group by user_id HAVING COUNT(votes) > 2;
+'''
 
 class Query(BaseModel):
     q: str
@@ -52,35 +54,49 @@ async def main(query: Query):
                 else:
                     select_cols_parsed.append(v)
         return (select_cols_parsed, aggregate_fns)        
-        
+    
+    def get_where_cond(parsed):
+        (cond, colval), = parsed.items()
+        col1 = colval[0]
+        val = colval[1]
+        return [cond, col1, val]
+    
     def get_mapper_test_cmd(parsed):
         select_cols, agg_fn = get_select_cols(parsed["select"])
         select_cols_pickle = binascii.hexlify(pickle.dumps(select_cols)).decode()
-        return f"cat data/test.txt", f"""python3 mapper.py {select_cols_pickle} {parsed["from"]} {agg_fn["col"]}"""
+        where_cl = get_where_cond(parsed["where"])
+        return (
+            f"cat data/test.txt", 
+        f"""python3 mapper.py {select_cols_pickle} {parsed["from"]} {agg_fn["col"]} {where_cl[0]} {where_cl[1]} {where_cl[2]}"""
+        )
         
     def get_reducer_test_cmd(parsed, map_out):
+        
         select_cols, agg_fn = get_select_cols(parsed["select"])
         X = parsed["having"]["gt"][1]
         return f"""python3 reducer.py {agg_fn["fun"]} {X}"""
-        
-    parsed = parse(query.q)
     
+    parsed = parse(query.q)
+    print(parsed)
     ## mapper
     mapper_cmd1, mapper_cmd2  = get_mapper_test_cmd(parsed)
     map_process_temp = Popen(mapper_cmd1.split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    map_pipe_process = Popen(mapper_cmd2.split(" "), stdin=map_process_temp.stdout, stdout=PIPE)
-    map_process_temp.stdout.close() 
+    map_pipe_process = Popen(mapper_cmd2.split(" "), stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
     mapper_output, err = map_pipe_process.communicate()
+    map_process_temp.stdout.close() 
+    
     rc_m = map_pipe_process.returncode
+    print("Error in mapper: ", err.decode(), 'return code: ', rc_m)
+    
     mapper_output_decoded = mapper_output.decode()
-    print(mapper_output_decoded)
+    print("mapper out: ", mapper_output_decoded)
     
-    ## reducer
+    # reducer
     reducer_cmd = get_reducer_test_cmd(parsed, mapper_output)
-    reducer_pipe_process = Popen(reducer_cmd.split(" "), stdin=map_pipe_process.stdout, stdout=PIPE)
-    
+    reducer_pipe_process = Popen(reducer_cmd.split(" "), stdin=mapper_output, stdout=PIPE)
     reducer_output, err = reducer_pipe_process.communicate()
+    print("Error in reducer: ", err)
     rc_r = reducer_pipe_process.returncode
     
     return {

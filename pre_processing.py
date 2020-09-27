@@ -58,17 +58,17 @@ with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
                     elif key == "reviews":
                         # reviews: total: 2  downloaded: 2  avg rating: 5
                         total, downloaded, avg_rating = re.findall(r"\d*\.\d+|\d+", val.strip())
-                        product["reviews"] = {
+                        product.update( {
                             "total": total,
                             "downloaded": downloaded,
                             "avg_rating": avg_rating,
-                            "review": []
-                        }
+                        } )
+                        product["reviews"] = []
                         for rev in range(int(downloaded)):
                             review_tup = re.findall(RATING_REGEX, fin.readline().strip())
                             if not review_tup: continue
                             review_tup = review_tup[0]
-                            product["reviews"]["review"].append({
+                            product["reviews"].append({
                                 "date": review_tup[0],
                                 "user_id": review_tup[1],
                                 "rating": review_tup[2],
