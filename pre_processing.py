@@ -37,7 +37,7 @@ with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
                         product[key.lower()] = val
                     if key == "similar":
                         product[key] = [
-                            {"asin": val.strip() } 
+                                val.strip()
                                 for val in val.split(" ")[1:] if len(val) > 0
                             ]
                     elif key == "categories":

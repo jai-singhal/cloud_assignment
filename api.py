@@ -4,14 +4,16 @@ import os
 import pickle
 import re
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from subprocess import Popen, PIPE
+from fastapi.responses import HTMLResponse
 
 from moz_sql_parser import parse
 
 app = FastAPI()
-
+templates = Jinja2Templates(directory="templates")
 # uvicorn main:app --reload
 query = """
 SELECT group, sum(salesrank)
@@ -27,6 +29,11 @@ HAVING sum(salesrank)>10
 
 class Query(BaseModel):
     q: str
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.post("/run/sql")
 async def main(query: Query):
@@ -59,22 +66,28 @@ async def main(query: Query):
         (cond, colval), = parsed.items()
         col1 = colval[0]
         val = colval[1]
+        if isinstance(val, dict):
+            if "literal" in val.keys():
+                val = val["literal"]
         return [cond, col1, val]
     
     def get_mapper_test_cmd(parsed):
         select_cols, agg_fn = get_select_cols(parsed["select"])
-        select_cols_pickle = binascii.hexlify(pickle.dumps(select_cols)).decode()
+        select_cols_p = binascii.hexlify(pickle.dumps(select_cols)).decode()
         where_cl = get_where_cond(parsed["where"])
+
         return (
-            f"cat data/test.txt", 
-        f"""python3 mapper.py {select_cols_pickle} {parsed["from"]} {agg_fn["col"]} {where_cl[0]} {where_cl[1]} {where_cl[2]}"""
+        f"cat data/test.txt", 
+        f"""python3 mapper.py {select_cols_p} {parsed["from"]} {agg_fn["col"]} {where_cl[0]} {where_cl[1]} {where_cl[2]}"""
         )
         
     def get_reducer_test_cmd(parsed, map_out):
         
         select_cols, agg_fn = get_select_cols(parsed["select"])
-        X = parsed["having"]["gt"][1]
-        return f"""python3 reducer.py {agg_fn["fun"]} {X}"""
+        (op, op_val), = parsed["having"].items()
+        X = op_val[1]
+        to_return = f"""python3 reducer.py {agg_fn["fun"]} {X} {op}"""
+        return to_return
     
     parsed = parse(query.q)
     print(parsed)
@@ -92,14 +105,28 @@ async def main(query: Query):
     mapper_output_decoded = mapper_output.decode()
     print("mapper out: ", mapper_output_decoded)
     
+    reducer_in = open("reducer_inp.txt", "w")
+    for line in mapper_output_decoded.split("\n"):
+        if line:
+            reducer_in.write(line)
+            reducer_in.write("\n")
+    
+    reducer_in.close()
+          
     # reducer
     reducer_cmd = get_reducer_test_cmd(parsed, mapper_output)
-    reducer_pipe_process = Popen(reducer_cmd.split(" "), stdin=mapper_output, stdout=PIPE)
+    reducer_temp_process = Popen(['cat', 'reducer_inp.txt'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    reducer_pipe_process = Popen(reducer_cmd.split(" "), stdin=reducer_temp_process.stdout, stdout=PIPE)
     reducer_output, err = reducer_pipe_process.communicate()
+    reducer_temp_process.stdout.close() 
+    
     print("Error in reducer: ", err)
+    print("reducer out: ", reducer_output.decode())
     rc_r = reducer_pipe_process.returncode
     
     return {
-        "reducer_output": reducer_output, 
-        "mapper_output": mapper_output_decoded
+        "mapper_output": mapper_output_decoded,
+        "reducer_output": reducer_output.decode()
     }
+
+
