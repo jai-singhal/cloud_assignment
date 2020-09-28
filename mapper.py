@@ -117,7 +117,7 @@ class Mapper():
         if res is not None:
             key = binascii.hexlify(pickle.dumps(res["key"])).decode()
             return (key, float(res["value"]))
-        return (binascii.hexlify(pickle.dumps(["None",])).decode(), 0)
+        return (binascii.hexlify(pickle.dumps([])).decode(), 0)
 
 if __name__ == "__main__":
     SELECT_COLUMNS = sys.argv[1].strip()
