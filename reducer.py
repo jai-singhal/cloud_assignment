@@ -12,7 +12,8 @@ maxval = sys.maxsize
 current_max = minval
 current_min = maxval
 columns = None
-"""liss= [
+"""
+liss= [
     str({'key': ['Book'], 'value': '396585'}),
 str({'key': ['Book'], 'value': '168596'}),
 str({'key': ['Book'], 'value': '1270652'}),
@@ -21,8 +22,12 @@ str({'key': ['Book'], 'value': '455160'}),
 str({'key': ['Book'], 'value': '188784'}),
 str({'key': ['Book'], 'value': '277409'}),
 str({'key': ['Music'], 'value': '5392'}),
+str({'key': ['Book'], 'value': '2774099'})
 
 ]
+fun = "MAX"
+x=5
+operation="gt"
 """
 
 key2val={}
@@ -30,6 +35,7 @@ key2val={}
 fun = sys.argv[1].upper()
 x = int(sys.argv[2])
 operation=sys.argv[3].lower()
+
 if operation=="lt":
     sign = lt
 elif operation=="gt":
@@ -45,12 +51,6 @@ elif operation=="ne":
 else:
     print("Invalid comparison operator provided. Using \"greater than\" as default.")
     sign = gt
-    
-
-#list1= sorted(list1, key = lambda i: i['key'])
-
-
-
 
 if fun=='MAX':
 
@@ -68,9 +68,9 @@ if fun=='MAX':
 
 
         try:
-            key2val[columns]=max(key2val[columns],column1)
+            key2val[str(columns)]=max(key2val[str(columns)],column1)
         except:
-            key2val[columns]=column1
+            key2val[str(columns)]=column1
 
 elif fun=='MIN':
 
@@ -86,9 +86,9 @@ elif fun=='MIN':
             continue
 
         try:
-            key2val[columns]=min(key2val[columns],column1)
+            key2val[str(columns)]=min(key2val[str(columns)],column1)
         except:
-            key2val[columns]=column1
+            key2val[str(columns)]=column1
 
 
 elif fun=='SUM':
@@ -105,9 +105,9 @@ elif fun=='SUM':
             continue
 
         try:
-            key2val[columns]=key2val[columns]+column1
+            key2val[str(columns)]=key2val[str(columns)]+column1
         except:
-            key2val[columns]=column1
+            key2val[str(columns)]=column1
 
 elif fun=='COUNT':
 
@@ -123,9 +123,9 @@ elif fun=='COUNT':
             continue
 
         try:
-            key2val[columns]=key2val[columns]+1
+            key2val[str(columns)]=key2val[str(columns)]+1
         except:
-            key2val[columns]=1
+            key2val[str(columns)]=1
 
 
 for col in key2val.keys():
