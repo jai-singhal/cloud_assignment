@@ -25,7 +25,7 @@ str({'key': ['Music'], 'value': '5392'}),
 ]
 """
 
-list1= []
+key2val={}
 
 fun = sys.argv[1].upper()
 x = int(sys.argv[2])
@@ -45,22 +45,18 @@ elif operation=="ne":
 else:
     print("Invalid comparison operator provided. Using \"greater than\" as default.")
     sign = gt
+    
 
-
-for line in sys.stdin:
-    line1 = line.strip()
-    line1=ast.literal_eval(line)
-    list1.append(line1)
-
-list1= sorted(list1, key = lambda i: i['key'])
-
+#list1= sorted(list1, key = lambda i: i['key'])
 
 
 
 
 if fun=='MAX':
 
-    for line in list1:
+    for line in sys.stdin:
+        line = line.strip()
+        line=ast.literal_eval(line)
 
         columns,column1 = line['key'],line['value']
 
@@ -71,30 +67,16 @@ if fun=='MAX':
             continue
 
 
-        if not current_columns:
-            current_columns=columns
-
-        if current_columns == columns:
-            current_max= max(current_max, column1)
-
-        else:
-            if sign(current_max, x):
-                result = [current_columns, current_max]
-                print("\t".join(str(v).strip(' []') for v in result))
-
-            current_max = column1
-            current_columns = columns
-
-    # do not forget to output the last word if needed!
-    if current_columns == columns:
-        if sign(current_max, x):
-                result = [current_columns, current_max]
-                print("\t".join(str(v).strip(' []') for v in result))
-
+        try:
+            key2val[columns]=max(key2val[columns],column1)
+        except:
+            key2val[columns]=column1
 
 elif fun=='MIN':
 
-    for line in list1:
+    for line in sys.stdin:
+        line = line.strip()
+        line=ast.literal_eval(line)
     
         columns,column1 = line['key'],line['value']
         
@@ -103,32 +85,18 @@ elif fun=='MIN':
         except ValueError:
             continue
 
-        if not current_columns:
-            current_columns=columns
+        try:
+            key2val[columns]=min(key2val[columns],column1)
+        except:
+            key2val[columns]=column1
 
-        if current_columns == columns:
-            current_min= min(current_min, column1)
-
-        else:
-            if sign(current_min, x):
-                result = [current_columns, current_min]
-                print("\t".join(str(v).strip(' []') for v in result))
-
-            current_min = column1
-            current_columns = columns
-
-    # do not forget to output the last word if needed!
-    if current_columns == columns:
-        if sign(current_min, x):
-                result = [current_columns, current_min]
-                print("\t".join(str(v).strip(' []') for v in result))
 
 elif fun=='SUM':
-    sumval=0
-
-    for line in list1:
+    
+    for line in sys.stdin:
+        line = line.strip()
+        line=ast.literal_eval(line)
      
-        # print(line)
         columns,column1 = line['key'],line['value']
       
         try:
@@ -136,57 +104,33 @@ elif fun=='SUM':
         except ValueError:
             continue
 
-        if not current_columns:
-            current_columns=columns
-
-        if current_columns == columns:
-            sumval= sumval+column1
-
-        else:
-            if sign(sumval, x):
-                result = [current_columns, sumval]
-                print("\t".join(str(v).strip(' []') for v in result))
-
-            sumval = column1
-            current_columns = columns
-
-    # do not forget to output the last word if needed!
-    if current_columns == columns:
-        if sign(sumval, x):
-                result = [current_columns, sumval]
-                print("\t".join(str(v).strip(' []') for v in result))
+        try:
+            key2val[columns]=key2val[columns]+column1
+        except:
+            key2val[columns]=column1
 
 elif fun=='COUNT':
-    sumval=0
 
-    for line in list1:
+    for line in sys.stdin:
+        line = line.strip()
+        line=ast.literal_eval(line)
        
         columns,column1 = line['key'],line['value']
-        #columns, column1 = line.split('\t', 1)
-        #column1= column1.strip(' {}')
+        
         try:
             column1 = int(column1)
         except ValueError:
             continue
 
-        if not current_columns:
-            current_columns=columns
+        try:
+            key2val[columns]=key2val[columns]+1
+        except:
+            key2val[columns]=1
 
-        if current_columns == columns:
-            sumval= sumval +1
 
-        else:
-            if sign(sumval, x):
-                result = [current_columns, sumval]
-                print("\t".join(str(v).strip(' []') for v in result))
-
-            sumval = 1
-            current_columns = columns
-
-    # do not forget to output the last word if needed!
-    if current_columns == columns:
-        if sign(sumval, x):
-                result = [current_columns, sumval]
-                print("\t".join(str(v).strip(' []') for v in result))
+for col in key2val.keys():
+    if sign(key2val[col],x):
+        #insert pickle code for extracting list out of hash value
+        print(col,"|",key2val[col])
 
     
