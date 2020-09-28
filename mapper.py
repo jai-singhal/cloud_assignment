@@ -104,12 +104,12 @@ class Mapper():
             product = json.loads(product)
             res = self.generate_key_val_pair(product)
             if res: print(res)
-
+            
+    # (key\tval)
     def run_spark(self, product): 
         product = product.strip()
         product = json.loads(product)
         res = self.generate_key_val_pair(product)
-        
         import hashlib
 
         if res:

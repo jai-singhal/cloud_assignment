@@ -40,6 +40,7 @@ async def spark_post(query: Query):
     sc = SparkContext("local","PySpark sql run")
     data = sc.textFile("data/test.txt")
     m = Mapper(*get_mapper_args(parsed))
+    # (a, b)
     sparkmapp = data.map(lambda line: m.run_spark(line)).reduceByKey(lambda a, b: a+b)
     res = sparkmapp.collect()
     # wordCounts = data.map()
