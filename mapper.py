@@ -7,13 +7,14 @@ import pickle
 import binascii
 
 class Mapper():
-    def __init__(self, s1, s2, s3, s4, s5, s6):
+    def __init__(self, s1, s2, s3, s4, s5, s6, s7):
         self.SELECT_COLUMNS = pickle.loads(binascii.unhexlify(s1.encode()))
         self.TABLE_NAME = s2
         self.COLUMN1 = s3
         self.WHERE_CONDITION = s4
         self.WHERE_COLUMN = s5
         self.Y = s6
+        self.FUNC = s7
 
     def where_cond_eval(self, obj):
         if self.WHERE_CONDITION == "gt":
@@ -88,12 +89,14 @@ class Mapper():
                 if self.WHERE_COLUMN == columun and not self.where_cond_eval(row[columun]): pass
                 else:   newKey = row[columun]
             else:   return None
-            
             if newKey is not None:  response["key"].append(newKey)
             else:   return None
             
         if self.COLUMN1 in row.keys():
-            response["value"] = row[self.COLUMN1]
+            if self.FUNC.lower() == "count":
+                response["value"] = 1
+            else:
+                response["value"] = row[self.COLUMN1]
         else:
             response["value"] = 1
         return response       
@@ -113,23 +116,24 @@ class Mapper():
         res = self.generate_key_val_pair(product)
         if res is not None:
             key = binascii.hexlify(pickle.dumps(res["key"])).decode()
-            return (key, int(res["value"]))
+            return (key, float(res["value"]))
         return (binascii.hexlify(pickle.dumps(["None",])).decode(), 0)
 
 if __name__ == "__main__":
-    SELECT_COLUMNS = pickle.loads(binascii.unhexlify(sys.argv[1].encode()))
+    SELECT_COLUMNS = sys.argv[1].strip()
     TABLE_NAME = sys.argv[2].strip()
     COLUMN1 = sys.argv[3].strip()
     WHERE_CONDITION = sys.argv[4].strip()
     WHERE_COLUMN = sys.argv[5].strip()
     Y = sys.argv[6].strip()
-    
+    func = sys.argv[7].strip()
     m = Mapper(
         SELECT_COLUMNS,
         TABLE_NAME,
         COLUMN1,
         WHERE_CONDITION,
         WHERE_COLUMN,
-        Y
+        Y,
+        func
     )
     m.run()

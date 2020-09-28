@@ -37,13 +37,17 @@ def get_mapper_args(parsed):
     select_cols, agg_fn = get_select_cols(parsed["select"])
     select_cols_p = binascii.hexlify(pickle.dumps(select_cols)).decode()
     where_cl = get_where_cond(parsed["where"])
-    return (select_cols_p, parsed["from"], agg_fn["col"], where_cl[0], where_cl[1], where_cl[2])
+    return (select_cols_p, parsed["from"], 
+            agg_fn["col"], where_cl[0], 
+            where_cl[1], where_cl[2],
+            agg_fn["fun"]
+        )
 
 
 def run_mapper_process(parsed):
     mapper_cmd = ["python3", "mapper.py"]
     for arg in get_mapper_args(parsed): mapper_cmd.append(arg)
-    map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    map_process_temp = Popen(["cat", "data/amazon-meta-processed.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     map_pipe_process = Popen(mapper_cmd, stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
     mapper_output, err = map_pipe_process.communicate()
@@ -74,8 +78,9 @@ def reducer_operation(func, a, b):
     elif func.lower() == "sum":
         return a+b
     elif func.lower() == "count":
-        return 2
+        return a+b
     return 1
+
     
 def having_cond_eval(cond, row, b):
     a = row[1]

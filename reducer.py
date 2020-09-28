@@ -35,7 +35,7 @@ operation="gt"
 key2val={}
 
 fun = sys.argv[1].upper()
-x = int(sys.argv[2])
+x = float(sys.argv[2])
 operation=sys.argv[3].lower()
 
 if operation=="lt":
@@ -64,7 +64,7 @@ if fun=='MAX':
 
 
         try:
-            column1 = int(column1)
+            column1 = float(column1)
         except ValueError:
             continue
 
@@ -78,12 +78,10 @@ elif fun=='MIN':
 
     for line in sys.stdin:
         line = line.strip().split("\t")
-        #line=ast.literal_eval(line)
-
         columns,column1 = line[0],line[1]
         
         try:
-            column1 = int(column1)
+            column1 = float(column1)
         except ValueError:
             continue
 
@@ -102,7 +100,7 @@ elif fun=='SUM':
         columns,column1 = line[0],line[1]
       
         try:
-            column1 = int(column1)
+            column1 = float(column1)
         except ValueError:
             continue
 
@@ -120,7 +118,7 @@ elif fun=='COUNT':
         columns,column1 = line[0],line[1]
         
         try:
-            column1 = int(column1)
+            column1 = float(column1)
         except ValueError:
             continue
 
