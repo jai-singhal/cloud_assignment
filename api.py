@@ -20,7 +20,6 @@ HAVING FUNC(COLUMN1)>X
 """ 
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
 sc = SparkContext("local","PySpark sql run")
 # sc.setLogLevel("INFO")
 data = sc.textFile("data/test.txt")
