@@ -57,10 +57,10 @@ else:
 if fun=='MAX':
 
     for line in sys.stdin:
-        line = line.strip()
-        line=ast.literal_eval(line)
+        line = line.strip().split("\t")
+        #line=ast.literal_eval(line)
 
-        columns,column1 = line['key'],line['value']
+        columns,column1 = line[0],line[1]
 
 
         try:
@@ -77,10 +77,10 @@ if fun=='MAX':
 elif fun=='MIN':
 
     for line in sys.stdin:
-        line = line.strip()
-        line=ast.literal_eval(line)
-    
-        columns,column1 = line['key'],line['value']
+        line = line.strip().split("\t")
+        #line=ast.literal_eval(line)
+
+        columns,column1 = line[0],line[1]
         
         try:
             column1 = int(column1)
@@ -96,10 +96,10 @@ elif fun=='MIN':
 elif fun=='SUM':
     
     for line in sys.stdin:
-        line = line.strip()
-        line=ast.literal_eval(line)
-     
-        columns,column1 = line['key'],line['value']
+        line = line.strip().split("\t")
+        #line=ast.literal_eval(line)
+
+        columns,column1 = line[0],line[1]
       
         try:
             column1 = int(column1)
@@ -114,10 +114,10 @@ elif fun=='SUM':
 elif fun=='COUNT':
 
     for line in sys.stdin:
-        line = line.strip()
-        line=ast.literal_eval(line)
-       
-        columns,column1 = line['key'],line['value']
+        line = line.strip().split("\t")
+        #line=ast.literal_eval(line)
+
+        columns,column1 = line[0],line[1]
         
         try:
             column1 = int(column1)
