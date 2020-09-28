@@ -4,7 +4,7 @@
 from operator import itemgetter
 import sys
 import ast
-from operator import lt,gt,eq,le,ge
+from operator import lt,gt,eq,le,ge,ne
 
 current_columns = None
 minval = -sys.maxsize - 1

@@ -1,33 +1,55 @@
-import binascii
 import json
 import os
 import pickle
 import re
+from subprocess import PIPE, Popen
 
-from fastapi import FastAPI
-from pydantic import BaseModel
-from subprocess import Popen, PIPE
-
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from moz_sql_parser import parse
+from pydantic import BaseModel
+from pyspark import SparkConf, SparkContext
+from mapper import Mapper
+from utils import *
+
+"""
+SELECT <COLUMNS>, FUNC(COLUMN1)
+FROM <TABLE>
+WHERE <COLUMN1> = Y
+GROUP BY <COLUMNS>
+HAVING FUNC(COLUMN1)>X
+--Here FUNC can be COUNT, MAX, MIN, SUM
+""" 
 
 app = FastAPI()
-
-# uvicorn main:app --reload
-query = """
-SELECT group, sum(salesrank)
-FROM products
-GROUP BY group
-HAVING sum(salesrank)>10
-""" 
-# {"select": [{"value": "abc"}, {"value": "def"}, {"value": {"sum": "xyx"}}], "from": "reviews", 
-#  "groupby": [{"value": "abc"}, {"value": "def"}], "having": {"gt": [{"sum": "xyx"}, 10]}}
-
+templates = Jinja2Templates(directory="templates")
 
 class Query(BaseModel):
     q: str
 
-@app.post("/run/sql")
-async def main(query: Query):
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+import random
+@app.post("/run/sql/spark")
+async def spark_post(query: Query):
+    parsed = parse(query.q)
+    print(parsed)
+    sc = SparkContext("local","PySpark sql run")
+    data = sc.textFile("data/test.txt")
+    m = Mapper(*get_mapper_args(parsed))
+    sparkmapp = data.map(lambda line: m.run_spark(line)).reduceByKey(lambda a, b: a+b)
+    res = sparkmapp.collect()
+    # wordCounts = data.map()
+    return {
+        "out": res,
+    }
+
+
+@app.post("/run/sql/map_reduce")
+async def map_reduce_post(query: Query):
     def get_cmd():
         MAP_REDUCE_CMD = """
             hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar 
@@ -38,52 +60,46 @@ async def main(query: Query):
             -input data/amazon-meta-processed.txt
             -output /user/hduser/gutenberg-output/r
         """
-    def get_select_cols(select_cols):
-        select_cols_parsed = []
-        aggregate_fns = {}
-        for s_col in select_cols:
-            for k, v in s_col.items():
-                if isinstance(v, dict):
-                    for v1, v2 in v.items():
-                        aggregate_fns = {
-                            "fun": v1,
-                            "col": v2,
-                        }
-                else:
-                    select_cols_parsed.append(v)
-        return (select_cols_parsed, aggregate_fns)        
-        
-    def get_mapper_test_cmd(parsed):
-        select_cols, agg_fn = get_select_cols(parsed["select"])
-        select_cols_pickle = binascii.hexlify(pickle.dumps(select_cols)).decode()
-        return f"cat data/test.txt", f"""python3 mapper.py {select_cols_pickle} {parsed["from"]} {agg_fn["col"]}"""
-        
-    def get_reducer_test_cmd(parsed, map_out):
-        select_cols, agg_fn = get_select_cols(parsed["select"])
-        X = parsed["having"]["gt"][1]
-        return f"""python3 reducer.py {agg_fn["fun"]} {X}"""
-        
+   
     parsed = parse(query.q)
-    
+    print(parsed)
     ## mapper
-    mapper_cmd1, mapper_cmd2  = get_mapper_test_cmd(parsed)
-    map_process_temp = Popen(mapper_cmd1.split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    map_pipe_process = Popen(mapper_cmd2.split(" "), stdin=map_process_temp.stdout, stdout=PIPE)
-    map_process_temp.stdout.close() 
+    mapper_cmd = ["python3", "mapper.py"]
+    for arg in get_mapper_args(parsed): mapper_cmd.append(arg)
+    
+    map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    print(map_process_temp.stdout)
+    map_pipe_process = Popen(mapper_cmd, stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
     mapper_output, err = map_pipe_process.communicate()
+    map_process_temp.stdout.close() 
+    
     rc_m = map_pipe_process.returncode
+    print("Error in mapper: ", err.decode(), 'return code: ', rc_m)
+    
     mapper_output_decoded = mapper_output.decode()
-    print(mapper_output_decoded)
+    print("mapper out: ", mapper_output_decoded)
     
-    ## reducer
+    reducer_in = open("reducer_inp.txt", "w")
+    for line in mapper_output_decoded.split("\n"):
+        if line:
+            reducer_in.write(line)
+            reducer_in.write("\n")
+    
+    reducer_in.close()
+          
+    # reducer
     reducer_cmd = get_reducer_test_cmd(parsed, mapper_output)
-    reducer_pipe_process = Popen(reducer_cmd.split(" "), stdin=map_pipe_process.stdout, stdout=PIPE)
-    
+    reducer_temp_process = Popen(['cat', 'reducer_inp.txt'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    reducer_pipe_process = Popen(reducer_cmd.split(" "), stdin=reducer_temp_process.stdout, stdout=PIPE)
     reducer_output, err = reducer_pipe_process.communicate()
+    reducer_temp_process.stdout.close() 
+    
+    print("Error in reducer: ", err)
+    print("reducer out: ", reducer_output.decode())
     rc_r = reducer_pipe_process.returncode
     
     return {
-        "reducer_output": reducer_output, 
-        "mapper_output": mapper_output_decoded
+        "mapper_output": mapper_output_decoded,
+        "reducer_output": reducer_output.decode()
     }
