@@ -43,7 +43,6 @@ def get_mapper_args(parsed):
 def run_mapper_process(parsed):
     mapper_cmd = ["python3", "mapper.py"]
     for arg in get_mapper_args(parsed): mapper_cmd.append(arg)
-
     map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     map_pipe_process = Popen(mapper_cmd, stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
@@ -78,7 +77,8 @@ def reducer_operation(func, a, b):
         return 2
     return 1
     
-def having_cond_eval(cond, a, b):
+def having_cond_eval(cond, row, b):
+    a = row[1]
     if cond.lower()== "gt":
         return a > b
     elif cond.lower() == "lt":

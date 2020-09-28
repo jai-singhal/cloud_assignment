@@ -8,7 +8,7 @@ import binascii
 
 class Mapper():
     def __init__(self, s1, s2, s3, s4, s5, s6):
-        self.SELECT_COLUMNS = s1
+        self.SELECT_COLUMNS = pickle.loads(binascii.unhexlify(s1.encode()))
         self.TABLE_NAME = s2
         self.COLUMN1 = s3
         self.WHERE_CONDITION = s4
@@ -66,9 +66,10 @@ class Mapper():
         return newKey
     
     def generate_key_val_pair(self, row):
+        response = {"key": [], "value": 0}
+        
         if self.COLUMN1 not in row.keys():
             return None
-        response = {"key": [], "value": 0}
 
         for columun in self.SELECT_COLUMNS:
             newKey = None
@@ -95,7 +96,6 @@ class Mapper():
             response["value"] = row[self.COLUMN1]
         else:
             response["value"] = 1
-        
         return response       
 
     def run(self): 
@@ -111,10 +111,10 @@ class Mapper():
         product = product.strip()
         product = json.loads(product)
         res = self.generate_key_val_pair(product)
-
-        if res:
+        if res is not None:
             key = binascii.hexlify(pickle.dumps(res["key"])).decode()
             return (key, int(res["value"]))
+        return (binascii.hexlify(pickle.dumps(["None",])).decode(), 0)
 
 if __name__ == "__main__":
     SELECT_COLUMNS = pickle.loads(binascii.unhexlify(sys.argv[1].encode()))

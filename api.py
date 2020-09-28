@@ -3,9 +3,7 @@ import os
 import pickle
 import re
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
 from moz_sql_parser import parse
 from pydantic import BaseModel
 from pyspark import SparkConf, SparkContext
@@ -23,36 +21,40 @@ HAVING FUNC(COLUMN1)>X
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+sc = SparkContext("local","PySpark sql run")
+# sc.setLogLevel("INFO")
+data = sc.textFile("data/test.txt")
 
 class Query(BaseModel):
     q: str
-
-@app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/run/sql/spark")
 async def spark_post(query: Query):
     parsed = parse(query.q)
     print(parsed)
-    
-    sc = SparkContext("local","PySpark sql run")
-    data = sc.textFile("data/test.txt")
+    func, Y, operation = get_reducer_args(parsed)
+    print(func, operation, Y)
+
     m = Mapper(*get_mapper_args(parsed))
-    
-    func, op, Y = get_reducer_args(parsed)
     
     sparkmapp = data.map(
         lambda line: m.run_spark(line)
     ).reduceByKey(
         lambda a, b: reducer_operation(func, a, b)
     ).filter(
-        lambda key, val: having_cond_eval(op, val, Y)
+        lambda row: having_cond_eval(operation, row, Y)
     )
+    results = sparkmapp.collect()
+    to_return = []
+    sc.stop()
     
-    res = sparkmapp.collect()
+    for result in results:
+        to_return.append([
+            str(pickle.loads(binascii.unhexlify(result[0].encode()))),
+            result[1]
+        ])
     return {
-        "out": res,
+        "out": to_return,
     }
 
 
