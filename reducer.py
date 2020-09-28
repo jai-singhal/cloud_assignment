@@ -53,75 +53,38 @@ elif operation=="ne":
 else:
     print("Invalid comparison operator provided. Using \"greater than\" as default.")
     sign = gt
-
-if fun=='MAX':
-
-    for line in sys.stdin:
-        line = line.strip().split("\t")
+for line in sys.stdin:
+    line = line.strip().split("\t")
         #line=ast.literal_eval(line)
 
-        columns,column1 = line[0],line[1]
+    columns,column1 = line[0],line[1]
 
 
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
-
-
+    try:
+        column1 = float(column1)
+    except ValueError:
+        continue
+    if fun=='MAX':
         try:
             key2val[str(columns)]=max(key2val[str(columns)],column1)
         except:
             key2val[str(columns)]=column1
 
-elif fun=='MIN':
-
-    for line in sys.stdin:
-        line = line.strip().split("\t")
-        columns,column1 = line[0],line[1]
-        
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
-
+    elif fun=='MIN':
         try:
             key2val[str(columns)]=min(key2val[str(columns)],column1)
         except:
             key2val[str(columns)]=column1
 
 
-elif fun=='SUM':
-    
-    for line in sys.stdin:
-        line = line.strip().split("\t")
-        #line=ast.literal_eval(line)
-
-        columns,column1 = line[0],line[1]
-      
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
+    elif fun=='SUM':
 
         try:
             key2val[str(columns)]=key2val[str(columns)]+column1
         except:
             key2val[str(columns)]=column1
 
-elif fun=='COUNT':
-
-    for line in sys.stdin:
-        line = line.strip().split("\t")
-        #line=ast.literal_eval(line)
-
-        columns,column1 = line[0],line[1]
-        
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
-
+    elif fun=='COUNT':
         try:
             key2val[str(columns)]=key2val[str(columns)]+1
         except:
