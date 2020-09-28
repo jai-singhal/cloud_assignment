@@ -5,6 +5,8 @@ from operator import itemgetter
 import sys
 import ast
 from operator import lt,gt,eq,le,ge,ne
+import pickle
+import binascii
 
 current_columns = None
 minval = -sys.maxsize - 1
@@ -130,7 +132,8 @@ elif fun=='COUNT':
 
 for col in key2val.keys():
     if sign(key2val[col],x):
-        #insert pickle code for extracting list out of hash value
-        print(col,"|",key2val[col])
+       
+        mykey=pickle.loads(binascii.unhexlify(col))
+        print("  |  ".join(str(v) for v in mykey),"------",key2val[col])
 
     
