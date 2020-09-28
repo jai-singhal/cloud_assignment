@@ -42,8 +42,10 @@ def run_spark(parsed):
     to_return = []
     # sc.stop()
     for result in results:
+        key = pickle.loads(binascii.unhexlify(result[0].encode()))
+        if len(key) == 0:   continue
         to_return.append([
-            str(pickle.loads(binascii.unhexlify(result[0].encode()))),
+            str(key),
             result[1]
         ])
     return {
