@@ -10,6 +10,9 @@ from pyspark import SparkConf, SparkContext
 from mapper import Mapper
 from utils import *
 import time
+from datetime import datetime
+
+
 """
 SELECT <COLUMNS>, FUNC(COLUMN1)
 FROM <TABLE>
@@ -52,7 +55,7 @@ def run_spark(parsed):
         "out": to_return,
     }
 
-def run_map_reduce(parsed):
+def run_map_reduce_test(parsed):
     mapper_output = run_mapper_process(parsed)
     mapper_output_decoded = mapper_output.decode()
     
@@ -66,6 +69,27 @@ def run_map_reduce(parsed):
     reducer_output = run_reducer_process(parsed)
     reducer_output_decoded = reducer_output.decode()
     return reducer_output_decoded
+
+def run_map_reduce(parsed):
+    now = str(datetime.now())
+    dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+    MAP_REDUCE_CMD = f"""
+        hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar 
+        -file mapper.py 
+        -mapper /home/cloudera/Downloads/tmp/mapper.py 
+        -file reducer.py 
+        -reducer /home/cloudera/Downloads/tmp/reducer.py 
+        -input data/amazon-meta-processed.txt 
+        -output /user/hduser/output/{dt_string} 
+    """
+    MAP_REDUCE_CMD = MAP_REDUCE_CMD.replace("\n", "").split(" ")
+    pr = Popen(MAP_REDUCE_CMD, stdin=PIPE, stdout=PIPE)
+    output, err = pr.communicate()
+    resultset = []
+    for out in output.split("\n"):
+        resultset.append(out.split("\t"))
+        
+    return resultset
 
 @app.post("/run")
 async def main(query: Query):
