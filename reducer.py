@@ -36,10 +36,12 @@ elif operation=="gt":
     sign = gt
 elif operation=="eq":
     sign = eq
-elif operation == "le":
+elif operation == "lte":
     sign = le
-elif operation=="ge":
+elif operation=="gte":
     sign = ge
+elif operation=="ne":
+    sign = ne
 else:
     print("Invalid comparison operator provided. Using \"greater than\" as default.")
     sign = gt
