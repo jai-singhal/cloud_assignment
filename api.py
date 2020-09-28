@@ -73,6 +73,7 @@ def run_map_reduce_test(parsed):
 def run_map_reduce(parsed):
     now = str(datetime.now())
     dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+    
     MAP_REDUCE_CMD = f"""
         hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar 
         -file mapper.py 
@@ -82,13 +83,15 @@ def run_map_reduce(parsed):
         -input data/amazon-meta-processed.txt 
         -output /user/hduser/output/{dt_string} 
     """
+    
     MAP_REDUCE_CMD = MAP_REDUCE_CMD.replace("\n", "").split(" ")
     pr = Popen(MAP_REDUCE_CMD, stdin=PIPE, stdout=PIPE)
     output, err = pr.communicate()
+    print("Error: ", err)
+    
     resultset = []
-    for out in output.split("\n"):
+    for out in output.decode().split("\n"):
         resultset.append(out.split("\t"))
-        
     return resultset
 
 @app.post("/run")
@@ -108,16 +111,3 @@ async def main(query: Query):
         "spark_out": spark_out,
         "spark_time": spark_time
     }
-
-
-
-# def get_cmd():
-#     MAP_REDUCE_CMD = """
-#         hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar 
-#         -file mapper.py 
-#         -mapper /home/cloudera/Downloads/tmp/mapper.py 
-#         -file reducer.py 
-#         -reducer /home/cloudera/Downloads/tmp/reducer.py 
-#         -input data/amazon-meta-processed.txt
-#         -output /user/hduser/gutenberg-output/r
-#     """

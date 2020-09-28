@@ -58,7 +58,7 @@ def run_mapper_process(parsed):
     return mapper_output
 
 def run_reducer_process(parsed):
-    reducer_cmd = ["python3", "reducer.py"] 
+    reducer_cmd = ["python3", "reducer_test.py"] 
     for arg in get_reducer_args(parsed):
         reducer_cmd.append(str(arg))
 
