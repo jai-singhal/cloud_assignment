@@ -9,28 +9,10 @@ import pickle
 import binascii
 
 current_columns = None
-minval = -sys.maxsize - 1
-maxval = sys.maxsize 
-current_max = minval
-current_min = maxval
+current_val= None
 columns = None
-"""
-liss= [
-    str({'key': ['Book'], 'value': '396585'}),
-str({'key': ['Book'], 'value': '168596'}),
-str({'key': ['Book'], 'value': '1270652'}),
-str({'key': ['Book'], 'value': '631289'}),
-str({'key': ['Book'], 'value': '455160'}),
-str({'key': ['Book'], 'value': '188784'}),
-str({'key': ['Book'], 'value': '277409'}),
-str({'key': ['Music'], 'value': '5392'}),
-str({'key': ['Book'], 'value': '2774099'})
-
-]
-fun = "MAX"
-x=5
-operation="gt"
-"""
+sumval=0
+## https://github.com/zonca/python-wordcount-hadoop/blob/master/reducer.py
 
 key2val={}
 
@@ -53,85 +35,63 @@ elif operation=="ne":
 else:
     print("Invalid comparison operator provided. Using \"greater than\" as default.")
     sign = gt
-
-if fun=='MAX':
-
-    for line in sys.stdin:
-        line = line.strip().split("\t")
-        #line=ast.literal_eval(line)
-
-        columns,column1 = line[0],line[1]
-
-
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
-
-
-        try:
-            key2val[str(columns)]=max(key2val[str(columns)],column1)
-        except:
-            key2val[str(columns)]=column1
-
-elif fun=='MIN':
-
-    for line in sys.stdin:
-        line = line.strip().split("\t")
-        columns,column1 = line[0],line[1]
-        
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
-
-        try:
-            key2val[str(columns)]=min(key2val[str(columns)],column1)
-        except:
-            key2val[str(columns)]=column1
-
-
-elif fun=='SUM':
     
-    for line in sys.stdin:
-        line = line.strip().split("\t")
-        #line=ast.literal_eval(line)
+  
+    
+for line in sys.stdin:
+    line = line.strip().split("\t")
+    columns,column1 = line[0],line[1]
 
-        columns,column1 = line[0],line[1]
-      
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
-
-        try:
-            key2val[str(columns)]=key2val[str(columns)]+column1
-        except:
-            key2val[str(columns)]=column1
-
-elif fun=='COUNT':
-
-    for line in sys.stdin:
-        line = line.strip().split("\t")
-        #line=ast.literal_eval(line)
-
-        columns,column1 = line[0],line[1]
+    try:
+        column1 = float(column1)
+    except ValueError:
+        continue
+    if fun=='MAX':
+      	if current_columns == columns:
+            current_val= max(current_val, column1)
+        else:
+          	if current_columns:
+                  if sign(current_val, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print(f"{str(mykey)}\t{column1}")
+                    current_val = column1
+                    current_columns = columns
         
-        try:
-            column1 = float(column1)
-        except ValueError:
-            continue
 
-        try:
-            key2val[str(columns)]=key2val[str(columns)]+1
-        except:
-            key2val[str(columns)]=1
+    elif fun=='MIN':
+        if current_columns == columns:
+            current_val= min(current_val, column1)
+        else:
+          	if current_columns:
+                  if sign(current_val, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print(f"{str(mykey)}\t{column1}")
+                    current_val = column1
+                    current_columns = columns
+
+    elif fun=='SUM':
+
+        if current_columns == columns:
+            current_val= sumval+column1
+        else:
+          	if current_columns:
+                  if sign(sumval, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print(f"{str(mykey)}\t{column1}")
+                    sumval = column1
+                    current_columns = columns
+
+    elif fun=='COUNT':
+        if current_columns == columns:
+            current_val= sumval+1
+        else:
+          	if current_columns:
+                  if sign(sumval, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print(f"{str(mykey)}\t{column1}")
+                    sumval = column1
+                    current_columns = columns
 
 
-for col in key2val.keys():
-    if sign(key2val[col],x):
-       
-        mykey=pickle.loads(binascii.unhexlify(col)) #yet to test
-        print("  |  ".join(str(v) for v in mykey),"------",key2val[col])
 
     
