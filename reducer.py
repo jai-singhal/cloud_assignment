@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """reducer.py"""
-
+from __future__ import print_function
 from operator import itemgetter
 import sys
 import ast
@@ -44,53 +44,49 @@ for line in sys.stdin:
 
     try:
         column1 = float(column1)
-    except ValueError:
+    except ValueError as e:
+        print(e)
         continue
     if fun=='MAX':
       	if current_columns == columns:
             current_val= max(current_val, column1)
         else:
-          	if current_columns:
-                  if sign(current_val, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print(f"{str(mykey)}\t{column1}")
-                    current_val = column1
-                    current_columns = columns
-        
+            if current_columns:
+                mykey=pickle.loads(binascii.unhexlify(current_columns))
+                print("%s\t%s" %(str(mykey), column1))
+            current_val = column1
+            current_columns = columns
 
     elif fun=='MIN':
         if current_columns == columns:
             current_val= min(current_val, column1)
         else:
-          	if current_columns:
-                  if sign(current_val, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print(f"{str(mykey)}\t{column1}")
-                    current_val = column1
-                    current_columns = columns
+            if current_columns:
+                mykey=pickle.loads(binascii.unhexlify(current_columns))
+                print("%s\t%s" %(str(mykey), column1))
+            current_val = column1
+            current_columns = columns
 
     elif fun=='SUM':
 
         if current_columns == columns:
             current_val= sumval+column1
         else:
-          	if current_columns:
-                  if sign(sumval, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print(f"{str(mykey)}\t{column1}")
-                    sumval = column1
-                    current_columns = columns
+            if current_columns:
+                mykey=pickle.loads(binascii.unhexlify(current_columns))
+                print("%s\t%s" %(str(mykey), column1))
+            sumval = column1
+            current_columns = columns
 
     elif fun=='COUNT':
         if current_columns == columns:
             current_val= sumval+1
         else:
-          	if current_columns:
-                  if sign(sumval, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print(f"{str(mykey)}\t{column1}")
-                    sumval = column1
-                    current_columns = columns
+            if current_columns:
+                mykey=pickle.loads(binascii.unhexlify(current_columns))
+                print("%s\t%s" %(str(mykey), column1))
+            sumval = column1
+            current_columns = columns
 
 
 

@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """mapper.py"""
-
+from __future__ import print_function
 import sys
 import json
 import pickle
 import binascii
-
 class Mapper():
     def __init__(self, s1, s2, s3, s4, s5, s6, s7):
         self.SELECT_COLUMNS = pickle.loads(binascii.unhexlify(s1.encode()))
@@ -46,7 +45,12 @@ class Mapper():
             if found:   break
             for category in categories:
                 if columun == "category":
-                    catname_id = f"{category['category_name']}[{category['category_id']}]"
+                    try:
+                        catname_id = "{0}[{1}]".format(
+                            category['category_name'], category['category_id']
+                        )
+                    except Exception as e:
+                        continue
                 elif columun == "category_id":
                     catname_id = category['category_id']
                 elif columun == "category_name":
@@ -103,21 +107,24 @@ class Mapper():
 
     def run(self): 
         for product in sys.stdin:
-            product = product.strip()
-            product = json.loads(product)
+            product = product.strip("\n")
+            try:
+                product = json.loads(product)
+            except Exception as e:
+                continue
             res = self.generate_key_val_pair(product)
             if res:
-                key = binascii.hexlify(pickle.dumps(res["key"])).decode()
-                print(f"{key}\t{res['value']}")
-            
+                key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
+                print("%s\t%s" %(key, res['value']))
+                
     def run_spark(self, product): 
         product = product.strip()
         product = json.loads(product)
         res = self.generate_key_val_pair(product)
         if res is not None:
-            key = binascii.hexlify(pickle.dumps(res["key"])).decode()
+            key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
             return (key, float(res["value"]))
-        return (binascii.hexlify(pickle.dumps([])).decode(), 0)
+        return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
 
 if __name__ == "__main__":
     SELECT_COLUMNS = sys.argv[1].strip()
@@ -127,6 +134,7 @@ if __name__ == "__main__":
     WHERE_COLUMN = sys.argv[5].strip()
     Y = sys.argv[6].strip()
     func = sys.argv[7].strip()
+    
     m = Mapper(
         SELECT_COLUMNS,
         TABLE_NAME,

@@ -35,19 +35,21 @@ def get_reducer_args(parsed):
 
 def get_mapper_args(parsed):
     select_cols, agg_fn = get_select_cols(parsed["select"])
-    select_cols_p = binascii.hexlify(pickle.dumps(select_cols)).decode()
+    select_cols_p = binascii.hexlify(pickle.dumps(select_cols, protocol = 2)).decode()
     where_cl = get_where_cond(parsed["where"])
-    return (select_cols_p, parsed["from"], 
+    return [
+        select_cols_p, parsed["from"], 
             agg_fn["col"], where_cl[0], 
             where_cl[1], where_cl[2],
             agg_fn["fun"]
-        )
+    ]
 
 
 def run_mapper_process(parsed):
     mapper_cmd = ["python3", "mapper.py"]
     for arg in get_mapper_args(parsed): mapper_cmd.append(arg)
-    map_process_temp = Popen(["cat", "data/amazon-meta-processed.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    print(" ".join(mapper_cmd))
+    map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     map_pipe_process = Popen(mapper_cmd, stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
     mapper_output, err = map_pipe_process.communicate()
@@ -96,3 +98,29 @@ def having_cond_eval(cond, row, b):
         return a <= b  
     elif cond.lower() == "neq":
         return a != b
+    
+def get_hadoop_steam_cmd(mapper_arggs_str, reducer_arggs_str
+                         ,INPUT_FILE_NAME, dt_string):
+    MAP_REDUCE_CMD = f"""
+        hadoop 
+        jar 
+        data/hadoop-streaming/hadoop-streaming.jar 
+        -file 
+        mapper.py 
+        -mapper
+        mapper.py {mapper_arggs_str}
+        -file 
+        reducer.py 
+        -reducer
+        reducer_test.py {reducer_arggs_str}
+        -input
+        {INPUT_FILE_NAME}
+        -output
+        output/{dt_string} 
+    """
+    MAP_REDUCE_CMD = [
+        arg.strip("\n ") for arg in 
+        MAP_REDUCE_CMD.split("\n")
+        if len(arg.strip("\n ")) != 0
+    ]
+    return MAP_REDUCE_CMD

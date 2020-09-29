@@ -11,7 +11,9 @@ from mapper import Mapper
 from utils import *
 import time
 from datetime import datetime
+# http://www.java2s.com/Code/Jar/h/Downloadhadoopstreamingjar.htm
 
+INPUT_FILE_NAME = "data/test.txt"
 
 """
 SELECT <COLUMNS>, FUNC(COLUMN1)
@@ -51,47 +53,26 @@ def run_spark(parsed):
             str(key),
             result[1]
         ])
-    return {
-        "out": to_return,
-    }
-
-def run_map_reduce_test(parsed):
-    mapper_output = run_mapper_process(parsed)
-    mapper_output_decoded = mapper_output.decode()
-    
-    with open("reducer_inp.txt", "w") as reducer_in:
-        for line in mapper_output_decoded.split("\n"):
-            if line:
-                reducer_in.write(line)
-                reducer_in.write("\n")
-          
-    # reducer
-    reducer_output = run_reducer_process(parsed)
-    reducer_output_decoded = reducer_output.decode()
-    return reducer_output_decoded
+    return to_return
 
 def run_map_reduce(parsed):
-    now = str(datetime.now())
-    dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+    dt_string = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+    mapper_arggs_str = " ".join(str(arg) for arg in get_mapper_args(parsed))
+    reducer_arggs_str = " ".join(str(arg) for arg in get_reducer_args(parsed))
     
-    MAP_REDUCE_CMD = f"""
-        hadoop jar /usr/lib/hadoop-mapreduce/hadoop-streaming.jar 
-        -file mapper.py 
-        -mapper /home/cloudera/Downloads/tmp/mapper.py 
-        -file reducer.py 
-        -reducer /home/cloudera/Downloads/tmp/reducer.py 
-        -input data/amazon-meta-processed.txt 
-        -output /user/hduser/output/{dt_string} 
-    """
+    MAP_REDUCE_CMD = get_hadoop_steam_cmd(
+        mapper_arggs_str, reducer_arggs_str,
+        INPUT_FILE_NAME, dt_string
+    )
+    print(" ".join(MAP_REDUCE_CMD))
     
-    MAP_REDUCE_CMD = MAP_REDUCE_CMD.replace("\n", "").split(" ")
     pr = Popen(MAP_REDUCE_CMD, stdin=PIPE, stdout=PIPE)
     output, err = pr.communicate()
-    print("Error: ", err)
     
     resultset = []
-    for out in output.decode().split("\n"):
-        resultset.append(out.split("\t"))
+    with open("output/{0}/part-00000".format(dt_string), "r") as fin:
+        for line in fin.readlines():
+            resultset.append(line.strip("\n"))
     return resultset
 
 @app.post("/run")
