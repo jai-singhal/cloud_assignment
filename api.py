@@ -44,6 +44,7 @@ def run_spark(parsed):
         lambda row: having_cond_eval(operation, row, Y)
     )
     results = sparkmapp.collect()
+    print(results)
     to_return = []
     # sc.stop()
     for result in results:

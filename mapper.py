@@ -5,6 +5,9 @@ import sys
 import json
 import pickle
 import binascii
+
+MV_TABLES= ["similar", "categories", "reviews"]
+
 class Mapper():
     def __init__(self, s1, s2, s3, s4, s5, s6, s7):
         self.SELECT_COLUMNS = pickle.loads(binascii.unhexlify(s1.encode()))
@@ -104,7 +107,26 @@ class Mapper():
         else:
             response["value"] = 1
         return response       
-
+    
+    
+    def print_keypair_for_mv(self, rows):
+        for row in rows:
+            if self.COLUMN1 not in row.keys():
+                continue
+            if not self.where_cond_eval(row[self.WHERE_COLUMN]):
+                continue
+            
+            response = {"key": [], "value": 0}
+            for columun in self.SELECT_COLUMNS:
+                if columun not in row.keys():
+                    continue
+                response["key"].append(row[columun])
+                
+            key = binascii.hexlify(pickle.dumps(response["key"], protocol=2)).decode()
+            response["value"] = row[self.COLUMN1]
+            print("%s\t%s" %(key, response['value']))
+            
+    
     def run(self): 
         for product in sys.stdin:
             product = product.strip("\n")
@@ -112,10 +134,17 @@ class Mapper():
                 product = json.loads(product)
             except Exception as e:
                 continue
-            res = self.generate_key_val_pair(product)
-            if res:
-                key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
-                print("%s\t%s" %(key, res['value']))
+            if self.TABLE_NAME  == "products":
+                res = self.generate_key_val_pair(product)
+                if res:
+                    key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
+                    print("%s\t%s" %(key, res['value']))
+            elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
+                row = product[self.TABLE_NAME]
+                self.print_keypair_for_mv(row)
+            else:
+                continue
+
                 
     def run_spark(self, product): 
         product = product.strip()
