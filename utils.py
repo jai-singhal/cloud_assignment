@@ -104,7 +104,7 @@ def get_hadoop_steam_cmd(mapper_arggs_str, reducer_arggs_str
     MAP_REDUCE_CMD = f"""
         hadoop 
         jar 
-        data/hadoop-streaming/hadoop-streaming.jar 
+        hadoop-streaming/hadoop-streaming.jar 
         -file 
         mapper.py 
         -mapper
