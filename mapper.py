@@ -124,6 +124,7 @@ class Mapper():
                 
             key = binascii.hexlify(pickle.dumps(response["key"], protocol=2)).decode()
             response["value"] = row[self.COLUMN1]
+            # TODO: should not return from here, doing for spark
             return (key, response['value'])
             
     
