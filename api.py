@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 import os
 import pickle
@@ -27,7 +28,7 @@ HAVING FUNC(COLUMN1)>X
 app = FastAPI()
 sc = SparkContext("local","PySpark sql run")
 # sc.setLogLevel("INFO")
-data = sc.textFile("data/amazon-meta-processed.txt")
+data = sc.textFile(INPUT_FILE_NAME)
 
 class Query(BaseModel):
     q: str
@@ -44,7 +45,6 @@ def run_spark(parsed):
         lambda row: having_cond_eval(operation, row, Y)
     )
     results = sparkmapp.collect()
-    print(results)
     to_return = []
     # sc.stop()
     for result in results:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """mapper.py"""
 from __future__ import print_function
 import sys
@@ -134,7 +134,7 @@ class Mapper():
                 product = json.loads(product)
             except Exception as e:
                 continue
-            if self.TABLE_NAME  == "products":
+            if self.TABLE_NAME == "products":
                 res = self.generate_key_val_pair(product)
                 if res:
                     key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
@@ -147,12 +147,22 @@ class Mapper():
 
                 
     def run_spark(self, product): 
-        product = product.strip()
-        product = json.loads(product)
-        res = self.generate_key_val_pair(product)
-        if res is not None:
-            key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
-            return (key, float(res["value"]))
+        try:
+            product = product.strip()
+            product = json.loads(product)
+        except Exception as e:
+            return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
+
+        if self.TABLE_NAME == "products":
+            res = self.generate_key_val_pair(product)
+            if res:
+                key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
+                return (key, float(res["value"]))
+            
+        elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
+            row = product[self.TABLE_NAME]
+            self.print_keypair_for_mv(row)
+
         return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
 
 if __name__ == "__main__":

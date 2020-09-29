@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """reducer.py"""
 
 from operator import itemgetter
@@ -62,12 +62,13 @@ for line in sys.stdin:
 
     try:
         column1 = float(column1)
-    except ValueError:
+    except ValueError as e:
+        print(e)
         continue
     if fun=='MAX':
         try:
             key2val[str(columns)]=max(key2val[str(columns)],column1)
-        except:
+        except Exception as e:
             key2val[str(columns)]=column1
 
     elif fun=='MIN':

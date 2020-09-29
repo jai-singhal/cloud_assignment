@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import binascii
 import json
 import pickle
@@ -110,7 +111,7 @@ def get_hadoop_steam_cmd(mapper_arggs_str, reducer_arggs_str
         -mapper
         mapper.py {mapper_arggs_str}
         -file 
-        reducer.py 
+        reducer_test.py 
         -reducer
         reducer_test.py {reducer_arggs_str}
         -input
