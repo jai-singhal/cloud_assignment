@@ -124,7 +124,7 @@ class Mapper():
                 
             key = binascii.hexlify(pickle.dumps(response["key"], protocol=2)).decode()
             response["value"] = row[self.COLUMN1]
-            print("%s\t%s" %(key, response['value']))
+            return (key, response['value'])
             
     
     def run(self): 
@@ -141,7 +141,8 @@ class Mapper():
                     print("%s\t%s" %(key, res['value']))
             elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
                 row = product[self.TABLE_NAME]
-                self.print_keypair_for_mv(row)
+                res = self.print_keypair_for_mv(row)
+                if res: print("%s\t%s" %(res[0], res[1]))
             else:
                 continue
 
@@ -161,7 +162,8 @@ class Mapper():
             
         elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
             row = product[self.TABLE_NAME]
-            self.print_keypair_for_mv(row)
+            res = self.print_keypair_for_mv(row)
+            if res: return (res[0], float(res[1]))
 
         return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
 

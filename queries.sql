@@ -13,3 +13,5 @@ select category, avg_rating, max(avg_rating) from products where category = 'Boo
 select category_name, downloaded, max(avg_rating) from products where category_name = 'Travel' group by category_name, downloaded having max(avg_rating) >= 2
 
 select similar_asin, downloaded, max(avg_rating) from products where similar_asin = '0590769855' group by similar_asin, downloaded having max(avg_rating) >= 1;
+
+select user_id, date, max(votes) from reviews where user_id = 'A28ZN9L5P6PDKP' group by user_id, date having max(votes) >= 4;
