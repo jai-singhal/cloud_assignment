@@ -6,7 +6,7 @@ import json
 import pickle
 import binascii
 
-MV_TABLES= ["similar", "categories", "reviews"]
+MV_TABLES= ["reviews", ]
 
 class Mapper():
     def __init__(self, s1, s2, s3, s4, s5, s6, s7):

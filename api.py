@@ -53,7 +53,12 @@ def run_spark_process(parsed):
         key_str = ""
         for k in key:
             key_str = key_str + str(k) + "  |  " 
-        to_return.append("{0}   {1}".format(str(key_str),result[1]))
+            out = result[1]
+            try:
+                out = int(out)
+            except Exception as e:
+                pass
+        to_return.append("{0}   {1}".format(str(key_str),out))
     return to_return
 
 def run_map_reduce(parsed):
@@ -85,7 +90,10 @@ async def main(query: Query):
             "error": "Query is not appropriate",
             "e": str(e)
         }
-        
+    if parsed["from"] not in ["reviews", "products"]:
+        return {
+            "error": "Table can only be reviews, products",
+        }
     try:
         tick = time.time()
         map_red_out = run_map_reduce(parsed)
@@ -112,6 +120,34 @@ async def main(query: Query):
             "map_reduce_job": map_red_out,
             "spark_job": spark_out,
         },
-        "map_reduce_job_time": mapred_time,
-        "spark_job_time": spark_time,
+        "map_reduce_job_time": "{:.3f} sec".format(mapred_time),
+        "spark_job_time": "{:.3f} sec".format(spark_time),
+        "map_reduce_job_format":{
+            "mapper":{
+                "input": "",
+                "output": ""
+            },
+            "reducer":{
+                "input": "",
+                "output": ""
+            }
+        },
+        "spark_job_format":{
+            "map":{
+                "transformations": "",
+                "action": ""
+            },
+            "flatmap":{
+                "transformations": "",
+                "action": ""
+            },
+            "reduce":{
+                "transformations": "",
+                "action": ""
+            },
+            "filter":{
+                "transformations": "",
+                "action": ""
+            }
+        }, 
     }
