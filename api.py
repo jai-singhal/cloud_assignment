@@ -3,15 +3,17 @@ import json
 import os
 import pickle
 import re
+import time
+from datetime import datetime
 
 from fastapi import FastAPI
 from moz_sql_parser import parse
 from pydantic import BaseModel
 from pyspark import SparkConf, SparkContext
+
 from mapper import Mapper
 from utils import *
-import time
-from datetime import datetime
+
 # http://www.java2s.com/Code/Jar/h/Downloadhadoopstreamingjar.htm
 
 INPUT_FILE_NAME = "data/test.txt"
@@ -63,9 +65,10 @@ def run_spark_process(parsed):
 
 def run_map_reduce(parsed):
     dt_string = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-    mapper_arggs_str = " ".join(str(arg) for arg in get_mapper_args(parsed))
-    reducer_arggs_str = " ".join(str(arg) for arg in get_reducer_args(parsed))
     
+    mapper_arggs_str = binascii.hexlify(pickle.dumps(get_mapper_args(parsed), protocol = 2)).decode()
+    reducer_arggs_str = binascii.hexlify(pickle.dumps(get_reducer_args(parsed), protocol = 2)).decode()
+    print(reducer_arggs_str)
     MAP_REDUCE_CMD = get_hadoop_steam_cmd(
         mapper_arggs_str, reducer_arggs_str,
         INPUT_FILE_NAME, dt_string
@@ -76,10 +79,17 @@ def run_map_reduce(parsed):
     output, err = pr.communicate()
     
     resultset = []
-    with open("output/{0}/part-00000".format(dt_string), "r") as fin:
-        for line in fin.readlines():
-            resultset.append(line.strip("\n"))
+    fileno = 0
+    while True:
+        filepath = "output/{0}/part-{1:05d}".format(dt_string, fileno)
+        if not os.path.exists(filepath):    break     
+        with open(filepath, "r") as fin:
+            for line in fin.readlines():
+                resultset.append(line.strip("\n"))
+        fileno += 1
+
     return resultset
+
 
 @app.post("/run")
 async def main(query: Query):
@@ -94,16 +104,16 @@ async def main(query: Query):
         return {
             "error": "Table can only be reviews, products",
         }
-    try:
-        tick = time.time()
-        map_red_out = run_map_reduce(parsed)
-        tock = time.time()
-        mapred_time = tock-tick
-    except Exception as e:
-        return {
-            "error": "Error in executing map reduce Job",
-            "e": str(e)
-        }
+    # try:
+    tick = time.time()
+    map_red_out = run_map_reduce(parsed)
+    tock = time.time()
+    mapred_time = tock-tick
+    # except Exception as e:
+    #     return {
+    #         "error": "Error in executing map reduce Job",
+    #         "e": str(e)
+    #     }
         
     try:
         spark_out = run_spark_process(parsed)

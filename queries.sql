@@ -17,3 +17,8 @@ select similar_asin, downloaded, max(avg_rating) from products where similar_asi
 select user_id, date, max(votes) from reviews where user_id = 'A28ZN9L5P6PDKP' group by user_id, date having max(votes) >= 4;
 
 select helpful, user_id, date, max(votes) from reviews where date = '2001-12-5' group by helpful, user_id, date having max(votes) >= 0
+
+select category_name, group, max(avg_rating) from products where category_name = 'Religion & Spirituality' group by category_name, group having max(avg_rating) >= 3
+
+nw:
+"select category_name, count(avg_rating) from products where avg_rating>100 group by category_name, similar_asin having count(similar_asin)>3"

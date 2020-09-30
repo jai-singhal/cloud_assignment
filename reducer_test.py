@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """reducer.py"""
 
-from operator import itemgetter
-import sys
 import ast
-from operator import lt,gt,eq,le,ge,ne
-import pickle
 import binascii
+import pickle
+import sys
+from operator import eq, ge, gt, itemgetter, le, lt, ne
 
 current_columns = None
 minval = -sys.maxsize - 1
@@ -34,9 +33,10 @@ operation="gt"
 
 key2val={}
 
-fun = sys.argv[1].upper()
-x = float(sys.argv[2])
-operation=sys.argv[3].lower()
+fun, x, operation = pickle.loads(binascii.unhexlify(sys.argv[1].encode()))
+fun = fun.upper()
+x = float(x)
+operation=operation.lower()
 
 if operation=="lt":
     sign = lt

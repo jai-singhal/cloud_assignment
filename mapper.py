@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """mapper.py"""
 from __future__ import print_function
-import sys
+
+import binascii
 import json
 import pickle
-import binascii
+import sys
 
 MV_TABLES= ["reviews", ]
 
@@ -15,10 +16,21 @@ class Mapper():
         self.COLUMN1 = s3
         self.WHERE_CONDITION = s4
         self.WHERE_COLUMN = s5
-        self.Y = s6
+        try:
+            self.Y = float(s6)
+        except:
+            self.Y = s6
         self.FUNC = s7
 
     def where_cond_eval(self, obj):
+        try:
+            obj = float(obj)
+        except:
+            pass
+        if isinstance(self.Y, str) or isinstance(obj, str):
+            self.Y = str(self.Y)
+            obj = str(obj) 
+        
         if self.WHERE_CONDITION == "gt":
             return obj > self.Y
         elif self.WHERE_CONDITION == "lt":
@@ -170,21 +182,5 @@ class Mapper():
         return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
 
 if __name__ == "__main__":
-    SELECT_COLUMNS = sys.argv[1].strip()
-    TABLE_NAME = sys.argv[2].strip()
-    COLUMN1 = sys.argv[3].strip()
-    WHERE_CONDITION = sys.argv[4].strip()
-    WHERE_COLUMN = sys.argv[5].strip()
-    Y = sys.argv[6].strip()
-    func = sys.argv[7].strip()
-    
-    m = Mapper(
-        SELECT_COLUMNS,
-        TABLE_NAME,
-        COLUMN1,
-        WHERE_CONDITION,
-        WHERE_COLUMN,
-        Y,
-        func
-    )
+    m = Mapper(*pickle.loads(binascii.unhexlify(sys.argv[1].encode())))
     m.run()

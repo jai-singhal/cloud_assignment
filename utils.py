@@ -4,6 +4,7 @@ import json
 import pickle
 from subprocess import PIPE, Popen
 
+
 def get_select_cols(select_cols):
     select_cols_parsed = []
     aggregate_fns = {}
@@ -47,11 +48,10 @@ def get_mapper_args(parsed):
 
 
 def run_mapper_process(parsed):
-    mapper_cmd = ["python3", "mapper.py"]
-    for arg in get_mapper_args(parsed): mapper_cmd.append(arg)
-    print(" ".join(mapper_cmd))
+    mapper_cmd = binascii.hexlify(pickle.dumps(get_mapper_args(parsed), protocol = 2)).decode()
+    
     map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    map_pipe_process = Popen(mapper_cmd, stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
+    map_pipe_process = Popen(["python3", "mapper.py", mapper_cmd], stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
     mapper_output, err = map_pipe_process.communicate()
     map_process_temp.stdout.close() 
@@ -61,12 +61,10 @@ def run_mapper_process(parsed):
     return mapper_output
 
 def run_reducer_process(parsed):
-    reducer_cmd = ["python3", "reducer_test.py"] 
-    for arg in get_reducer_args(parsed):
-        reducer_cmd.append(str(arg))
-
+    reducer_cmd = binascii.hexlify(pickle.dumps(get_reducer_args(parsed), protocol = 2)).decode()
+    
     reducer_temp_process = Popen(['cat', 'reducer_inp.txt'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    reducer_pipe_process = Popen(reducer_cmd, stdin=reducer_temp_process.stdout, stdout=PIPE)
+    reducer_pipe_process = Popen(["python3", "reducer_test.py", reducer_cmd], stdin=reducer_temp_process.stdout, stdout=PIPE)
     reducer_output, err = reducer_pipe_process.communicate()
     reducer_temp_process.stdout.close() 
     rc_m = reducer_pipe_process.returncode
