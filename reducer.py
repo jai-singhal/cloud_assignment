@@ -14,7 +14,7 @@ columns = None
 sumval=0
 ## https://github.com/zonca/python-wordcount-hadoop/blob/master/reducer.py
 
-key2val={}
+#key2val={}
 
 fun = sys.argv[1].upper()
 x = float(sys.argv[2])
@@ -52,8 +52,9 @@ for line in sys.stdin:
             current_val= max(current_val, column1)
         else:
             if current_columns:
-                mykey=pickle.loads(binascii.unhexlify(current_columns))
-                print("%s\t%s" %(str(mykey), column1))
+                if sign(current_val, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print("%s\t%s" %(str(mykey), column1))
             current_val = column1
             current_columns = columns
 
@@ -62,8 +63,9 @@ for line in sys.stdin:
             current_val= min(current_val, column1)
         else:
             if current_columns:
-                mykey=pickle.loads(binascii.unhexlify(current_columns))
-                print("%s\t%s" %(str(mykey), column1))
+                if sign(current_val, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print("%s\t%s" %(str(mykey), column1))
             current_val = column1
             current_columns = columns
 
@@ -73,8 +75,9 @@ for line in sys.stdin:
             current_val= sumval+column1
         else:
             if current_columns:
-                mykey=pickle.loads(binascii.unhexlify(current_columns))
-                print("%s\t%s" %(str(mykey), column1))
+                if sign(current_val, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print("%s\t%s" %(str(mykey), column1))
             sumval = column1
             current_columns = columns
 
@@ -83,11 +86,16 @@ for line in sys.stdin:
             current_val= sumval+1
         else:
             if current_columns:
-                mykey=pickle.loads(binascii.unhexlify(current_columns))
-                print("%s\t%s" %(str(mykey), column1))
+                if sign(current_val, x):
+                    mykey=pickle.loads(binascii.unhexlify(current_columns))
+                    print("%s\t%s" %(str(mykey), column1))
             sumval = column1
             current_columns = columns
-
+            
+if current_columns==columns:
+    if(sign(current_val,x)):
+            mykey=pickle.loads(binascii.unhexlify(current_columns))
+            print("%s\t%s" %(str(mykey), column1))
 
 
     
