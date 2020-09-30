@@ -125,3 +125,9 @@ def get_hadoop_steam_cmd(mapper_arggs_str, reducer_arggs_str
         if len(arg.strip("\n ")) != 0
     ]
     return MAP_REDUCE_CMD
+
+def split_spark_mapper_results(line):
+    if isinstance(line, tuple):
+        return [line,]
+    else: return line
+    

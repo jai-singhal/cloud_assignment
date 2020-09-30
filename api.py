@@ -33,13 +33,13 @@ data = sc.textFile(INPUT_FILE_NAME)
 class Query(BaseModel):
     q: str
 
-def run_spark(parsed):
+def run_spark_process(parsed):
     func, Y, operation = get_reducer_args(parsed)
     m = Mapper(*get_mapper_args(parsed))
     
     sparkmapp = data.map(
         lambda line: m.run_spark(line)
-    ).reduceByKey(
+    ).flatMap(lambda line: split_spark_mapper_results(line)).reduceByKey(
         lambda a, b: reducer_operation(func, a, b)
     ).filter(
         lambda row: having_cond_eval(operation, row, Y)
@@ -50,10 +50,10 @@ def run_spark(parsed):
     for result in results:
         key = pickle.loads(binascii.unhexlify(result[0].encode()))
         if len(key) == 0:   continue
-        to_return.append([
-            str(key),
-            result[1]
-        ])
+        key_str = ""
+        for k in key:
+            key_str = key_str + str(k) + "  |  " 
+        to_return.append("{0}   {1}".format(str(key_str),result[1]))
     return to_return
 
 def run_map_reduce(parsed):
@@ -78,18 +78,40 @@ def run_map_reduce(parsed):
 
 @app.post("/run")
 async def main(query: Query):
-    parsed = parse(query.q)
-    tick = time.time()
-    map_red_out = run_map_reduce(parsed)
-    tock = time.time()
-    mapred_time = tock-tick
-    spark_out = run_spark(parsed)
-    tick = time.time()
-    spark_time = tick-tock
-    
+    try:
+        parsed = parse(query.q)
+    except Exception as e:
+        return {
+            "error": "Query is not appropriate",
+            "e": str(e)
+        }
+        
+    try:
+        tick = time.time()
+        map_red_out = run_map_reduce(parsed)
+        tock = time.time()
+        mapred_time = tock-tick
+    except Exception as e:
+        return {
+            "error": "Error in executing map reduce Job",
+            "e": str(e)
+        }
+        
+    try:
+        spark_out = run_spark_process(parsed)
+        tick = time.time()
+        spark_time = tick-tock  
+    except Exception as e:
+        return {
+            "error": "Error in executing spark Job",
+            "e": str(e)
+        }
+            
     return {
-        "map_red": map_red_out,
-        "mapred_time": mapred_time,
-        "spark_out": spark_out,
-        "spark_time": spark_time
+        "query_output": {
+            "map_reduce_job": map_red_out,
+            "spark_job": spark_out,
+        },
+        "map_reduce_job_time": mapred_time,
+        "spark_job_time": spark_time,
     }

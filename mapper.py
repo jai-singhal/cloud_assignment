@@ -110,6 +110,7 @@ class Mapper():
     
     
     def print_keypair_for_mv(self, rows):
+        to_return = []
         for row in rows:
             if self.COLUMN1 not in row.keys():
                 continue
@@ -125,8 +126,8 @@ class Mapper():
             key = binascii.hexlify(pickle.dumps(response["key"], protocol=2)).decode()
             response["value"] = row[self.COLUMN1]
             # TODO: should not return from here, doing for spark
-            return (key, response['value'])
-            
+            to_return.append((key, float(response['value'])))
+        return to_return  
     
     def run(self): 
         for product in sys.stdin:
@@ -142,8 +143,8 @@ class Mapper():
                     print("%s\t%s" %(key, res['value']))
             elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
                 row = product[self.TABLE_NAME]
-                res = self.print_keypair_for_mv(row)
-                if res: print("%s\t%s" %(res[0], res[1]))
+                for res in self.print_keypair_for_mv(row):
+                    print("%s\t%s" %(res[0], str(res[1])))
             else:
                 continue
 
@@ -164,7 +165,7 @@ class Mapper():
         elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
             row = product[self.TABLE_NAME]
             res = self.print_keypair_for_mv(row)
-            if res: return (res[0], float(res[1]))
+            if len(res) > 0: return res
 
         return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
 
