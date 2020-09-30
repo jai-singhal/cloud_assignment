@@ -15,7 +15,11 @@ new_line_count = 0
 with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
     with open("data/amazon-meta-processed.txt", "w", encoding= "utf-8") as fout:
         product = {}
+        # a = 1
         while True:
+            # a+=1
+            # if a>100:
+            #     break
             line = fin.readline()
             if new_line_count > 2:
                 break
@@ -43,7 +47,10 @@ with open("data/amazon-meta.txt", "r", encoding="utf-8") as fin:
                     elif key == "categories":
                         product[key] = []
                         for i in range(int(val)):
-                            categories = re.findall(r"\|(\w*)\[(\d+)\]", fin.readline().strip())
+                            categories = re.findall(
+                                r"\|([a-zA-Z0-9 _%&@$*!-]*)\[(\d+)\]", 
+                                fin.readline().strip()
+                            )
                             index = 1
                             cat_arr = []
                             for type_, cat_id in categories:
