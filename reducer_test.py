@@ -48,7 +48,7 @@ elif operation == "lte":
     sign = le
 elif operation=="gte":
     sign = ge
-elif operation=="ne":
+elif operation=="neq":
     sign = ne
 else:
     print("Invalid comparison operator provided. Using \"greater than\" as default.")
