@@ -77,8 +77,18 @@ def run_mapper_process(parsed):
 
     mapper_output, err = map_pipe_process.communicate()
     map_process_temp.stdout.close() 
+    list1 = mapper_output.decode().split('\n')
+    list2=[]
+    for line in list1:
+        line=line.split('\t')
+        try:
+            line[0]=pickle.loads(binascii.unhexlify(line[0].encode()))
+        except EOFError:
+            pass
+        line="".join(str(line))
+        list2.append(line)
 
-    return (mapper_output.decode().replace('\t', '    ').split('\n'))
+    return list2
 
 def run_map_reduce(parsed):
     dt_string = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
