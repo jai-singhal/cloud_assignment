@@ -80,9 +80,10 @@ class Mapper():
     def get_similar_key(self, row):
         newKey = None
         for asin in row["similar"]:
-            if self.where_cond_eval(asin):
-                newKey = asin
-                break
+            if self.WHERE_COLUMN in "similar_asin":
+                if self.where_cond_eval(asin):
+                    newKey = asin
+                    break
         return newKey
     
     def generate_key_val_pair(self, row):
@@ -136,7 +137,13 @@ class Mapper():
                 response["key"].append(row[columun])
                 
             key = binascii.hexlify(pickle.dumps(response["key"], protocol=2)).decode()
-            response["value"] = row[self.COLUMN1]
+            if self.COLUMN1 in row.keys():
+                if self.FUNC.lower() == "count":
+                    response["value"] = 1
+                else:
+                    response["value"] = row[self.COLUMN1]
+            else:
+                response["value"] = 1
             # TODO: should not return from here, doing for spark
             to_return.append((key, float(response['value'])))
         return to_return  
