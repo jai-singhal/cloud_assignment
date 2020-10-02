@@ -35,6 +35,7 @@ data = sc.textFile(INPUT_FILE_NAME)
 class Query(BaseModel):
     q: str
 
+
 def run_spark_process(parsed):
     func, Y, operation = get_reducer_args(parsed)
     m = Mapper(*get_mapper_args(parsed))
@@ -63,12 +64,28 @@ def run_spark_process(parsed):
         to_return.append("{0}   {1}".format(str(key_str),out))
     return to_return
 
+def mapper_inp():
+    map_in = Popen(["head","10", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    output,err=map_in.communicate()
+    return output.decode().split('\n')
+
+def run_mapper_process(parsed):
+    mapper_cmd = binascii.hexlify(pickle.dumps(get_mapper_args(parsed), protocol = 2)).decode()
+    
+    map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    map_pipe_process = Popen(["python3", "mapper.py", mapper_cmd], stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
+
+    mapper_output, err = map_pipe_process.communicate()
+    map_process_temp.stdout.close() 
+
+    return (mapper_output.decode().replace('\t', '    ').split('\n'))
+
 def run_map_reduce(parsed):
     dt_string = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
     
     mapper_arggs_str = binascii.hexlify(pickle.dumps(get_mapper_args(parsed), protocol = 2)).decode()
     reducer_arggs_str = binascii.hexlify(pickle.dumps(get_reducer_args(parsed), protocol = 2)).decode()
-    print(reducer_arggs_str)
+    #print(reducer_arggs_str)
     MAP_REDUCE_CMD = get_hadoop_steam_cmd(
         mapper_arggs_str, reducer_arggs_str,
         INPUT_FILE_NAME, dt_string
@@ -105,10 +122,13 @@ async def main(query: Query):
             "error": "Table can only be reviews, products",
         }
     # try:
+    map_input=mapper_inp()
+    map_output=run_mapper_process(parsed)
     tick = time.time()
     map_red_out = run_map_reduce(parsed)
     tock = time.time()
     mapred_time = tock-tick
+
     # except Exception as e:
     #     return {
     #         "error": "Error in executing map reduce Job",
@@ -134,30 +154,23 @@ async def main(query: Query):
         "spark_job_time": "{:.3f} sec".format(spark_time),
         "map_reduce_job_format":{
             "mapper":{
-                "input": "",
-                "output": ""
+                "input": map_input,
+                "output": map_output
             },
             "reducer":{
-                "input": "",
-                "output": ""
+                "input": map_output,
+                "output": map_red_out
             }
         },
         "spark_job_format":{
-            "map":{
-                "transformations": "",
-                "action": ""
+            "transformations":{
+                "map()",
+                "flatMap()",
+                "reduceByKey()"
             },
-            "flatmap":{
-                "transformations": "",
-                "action": ""
-            },
-            "reduce":{
-                "transformations": "",
-                "action": ""
-            },
-            "filter":{
-                "transformations": "",
-                "action": ""
+            "actions":{
+                "filter()",
+                "collect()"
             }
         }, 
     }
