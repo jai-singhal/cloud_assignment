@@ -22,3 +22,5 @@ select category_name, group, max(avg_rating) from products where category_name =
 
 nw:
 "select category_name, count(avg_rating) from products where avg_rating>100 group by category_name, similar_asin having count(similar_asin)>3"
+
+select user_id, count(rating) from reviews where votes >=10 group by user_id having count(rating) >= 3
