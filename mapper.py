@@ -6,8 +6,11 @@ import binascii
 import json
 import pickle
 import sys
+import itertools
+from functools import reduce
 
 MV_TABLES= ["reviews", ]
+CATEGORIES_COLS = ["category", "category_name", "category_id"]
 
 class Mapper():
     def __init__(self, s1, s2, s3, s4, s5, s6, s7):
@@ -54,72 +57,141 @@ class Mapper():
         return newKey
     
     def get_category_key(self, row, columun):
-        newKey = None
-        found = False
-        for categories in row["categories"]:
-            if found:   break
-            for category in categories:
-                if columun == "category":
-                    try:
-                        catname_id = "{0}[{1}]".format(
-                            category['category_name'], category['category_id']
-                        )
-                    except Exception as e:
-                        continue
-                elif columun == "category_id":
-                    catname_id = category['category_id']
-                elif columun == "category_name":
-                    catname_id = category['category_name']
-                    
-                if self.where_cond_eval(catname_id):
-                    newKey = catname_id
-                    found = True
-                    break
-        return newKey
+        keys = []
+        categories = self.get_unique_categories(row["categories"], columun)
+        for category in categories:
+            if self.WHERE_COLUMN in CATEGORIES_COLS:
+                if self.where_cond_eval(category):
+                    keys.append(category)
+            else:
+                keys.append(category)
+        return keys
     
     def get_similar_key(self, row):
-        newKey = None
+        keys = []
         for asin in row["similar"]:
-            if self.WHERE_COLUMN in "similar_asin":
+            if self.WHERE_COLUMN == "similar_asin":
                 if self.where_cond_eval(asin):
-                    newKey = asin
-                    break
-        return newKey
+                    keys.append(asin)
+            else:
+                keys.append(asin)
+        return keys
+    
+    def cartesian_product(self, t1, t2, t_names):
+        keys = []
+        for i in itertools.product(t1, t2):
+            if self.WHERE_COLUMN == t_names[0]:
+                if self.where_cond_eval(i[0]):
+                    continue
+            
+            if self.WHERE_COLUMN == t_names[1]:
+                if self.where_cond_eval(i[1]):
+                    continue
+            keys.append(list(i))
+        return keys
+    
+    @staticmethod
+    def get_unique_categories(categories, type_):
+        unique_categories = set()
+        for row in categories:
+            for category in row:
+                if type_ == "category":
+                    unique_categories.add(
+                        "{0}[{1}]".format(
+                            category["category_name"],
+                            category["category_id"],
+                        )
+                    )
+                elif type_=="category_name":
+                    unique_categories.add(
+                        category["category_name"],
+                    )
+                elif type_=="category_id":
+                    unique_categories.add(
+                        category["category_id"],
+                )
+                    
+        return list(unique_categories)
+    
+    def check_where(self, objs):
+        for obj in objs:
+            if self.where_cond_eval(obj):
+                return True
+        return False
     
     def generate_key_val_pair(self, row):
-        response = {"key": [], "value": 0}
+        if self.WHERE_COLUMN in row.keys():
+            if not self.where_cond_eval(row[self.WHERE_COLUMN]):
+                return []
+        if "similar" in row.keys() and self.WHERE_COLUMN  == "similar_asin":
+            if not self.check_where(row["similar"]):
+                return []
         
-        if self.COLUMN1 not in row.keys():
-            return None
+        if "categories" in row.keys() and self.WHERE_COLUMN in CATEGORIES_COLS:
+            objs = self.get_unique_categories(row["categories"], self.WHERE_COLUMN)
+            if not self.check_where(objs):
+                return []
+        total_keys = []
+        if "similar_asin" in self.SELECT_COLUMNS and \
+         "category" in self.SELECT_COLUMNS:
+            if "similar" in row.keys() and "categories" in row.keys():
+                total_keys.append(self.cartesian_product(
+                    row["similar"], 
+                    self.get_unique_categories(row["categories"]),
+                    ["similar_asin", "category"]
+                ))
+                self.SELECT_COLUMNS.remove("similar_asin")
+                self.SELECT_COLUMNS.remove("category")
+        
 
         for columun in self.SELECT_COLUMNS:
             newKey = None
             if columun not in row.keys():
-                if len(row["reviews"]) > 0 and columun in row["reviews"][0].keys():
+                if "reviews" in row.keys() and len(row["reviews"]) > 0 and columun in row["reviews"][0].keys():
                     newKey = self.get_review_key(row, columun)
-                elif columun == "similar_asin":
+                elif "similar" in row.keys() and columun == "similar_asin":
                     newKey = self.get_similar_key(row)
-                elif columun == "category":
+                elif "categories" in row.keys() and columun == "category":
                     newKey = self.get_category_key(row, columun)
-                elif columun == "category_name":
+                elif "categories" in row.keys() and columun == "category_name":
                     newKey = self.get_category_key(row, columun)
+                elif "categories" in row.keys() and columun == "category_id":
+                    newKey = self.get_category_key(row, columun)
+                    
                 else:  continue
                 
             elif columun in row.keys():
                 if self.WHERE_COLUMN == columun and not self.where_cond_eval(row[columun]): pass
-                else:   newKey = row[columun]
-            else:   return None
-            if newKey is not None:  response["key"].append(newKey)
-            else:   return None
+                else:   newKey = [row[columun],]
+            else:   return []
             
-        if self.COLUMN1 in row.keys():
-            if self.FUNC.lower() == "count":
-                response["value"] = 1
+            if len(newKey): 
+                total_keys.append(newKey)
+        
+        row_response = []
+        for key in itertools.product(*tuple(total_keys)):
+            res = {"key": [], "value": 0}
+            if not key: continue
+            if isinstance(key, tuple):
+                for sublist in key:
+                    if isinstance(sublist, list):
+                        res["key"] += sublist
+                    else:
+                        res["key"].append(sublist)
             else:
-                response["value"] = row[self.COLUMN1]
-        else:
-            response["value"] = 1
-        return response       
+                res["key"] = [key,]
+
+            if self.COLUMN1 in row.keys():
+                if self.FUNC.lower() == "count":
+                    res["value"] = 1
+                else:
+                    res["value"] = row[self.COLUMN1]
+            else:
+                res["value"] = 1
+            if res["key"]:
+                row_response.append(res)
+        # print(row_response)
+        return row_response       
     
     
     def print_keypair_for_mv(self, rows):
@@ -156,10 +228,13 @@ class Mapper():
             except Exception as e:
                 continue
             if self.TABLE_NAME == "products":
-                res = self.generate_key_val_pair(product)
-                if res:
-                    key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
-                    print("%s\t%s" %(key, res['value']))
+                results = self.generate_key_val_pair(product)
+                for res in results:
+                    if res:
+                        # print(res)
+                        key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
+                        print("%s\t%s" %(key, res['value']))
+                        
             elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
                 row = product[self.TABLE_NAME]
                 for res in self.print_keypair_for_mv(row):
@@ -176,10 +251,13 @@ class Mapper():
             return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
 
         if self.TABLE_NAME == "products":
-            res = self.generate_key_val_pair(product)
-            if res:
-                key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
-                return (key, float(res["value"]))
+            results = self.generate_key_val_pair(product)
+            to_return  = []
+            for res in results:
+                if res:
+                    key = binascii.hexlify(pickle.dumps(res["key"], protocol=2)).decode()
+                    to_return.append((key, float(res["value"])))
+            return to_return
             
         elif self.TABLE_NAME in MV_TABLES and self.TABLE_NAME in product.keys():
             row = product[self.TABLE_NAME]
@@ -191,3 +269,7 @@ class Mapper():
 if __name__ == "__main__":
     m = Mapper(*pickle.loads(binascii.unhexlify(sys.argv[1].encode())))
     m.run()
+
+
+# mapper.py 80025d710028582c00000038303032356437313030353830383030303030303633363137343635363736663732373937313031363132657101580800000070726f64756374737102580900000073616c657372616e6b7103580200000065717104580c00000073696d696c61725f6173696e7105580a0000003036353830323135353971065805000000636f756e747107652e 
+# reducer_test.py 80025d7100285805000000636f756e7471014b0158030000006774657102652e
