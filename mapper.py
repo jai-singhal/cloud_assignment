@@ -120,6 +120,9 @@ class Mapper():
         return False
     
     def generate_key_val_pair(self, row):
+        '''
+        where clause checking
+        '''
         if self.WHERE_COLUMN in row.keys():
             if not self.where_cond_eval(row[self.WHERE_COLUMN]):
                 return []
@@ -131,6 +134,11 @@ class Mapper():
             objs = self.get_unique_categories(row["categories"], self.WHERE_COLUMN)
             if not self.check_where(objs):
                 return []
+            
+        '''
+        key formation for multi valued row
+        cartesian prod of similar, category
+        '''    
         total_keys = []
         if "similar_asin" in self.SELECT_COLUMNS and \
          "category" in self.SELECT_COLUMNS:
@@ -143,7 +151,9 @@ class Mapper():
                 self.SELECT_COLUMNS.remove("similar_asin")
                 self.SELECT_COLUMNS.remove("category")
         
-
+        '''key formation
+            for single valued
+        '''
         for columun in self.SELECT_COLUMNS:
             newKey = None
             if columun not in row.keys():
@@ -167,7 +177,8 @@ class Mapper():
             
             if len(newKey): 
                 total_keys.append(newKey)
-        
+
+        '''value formation'''
         row_response = []
         for key in itertools.product(*tuple(total_keys)):
             res = {"key": [], "value": 0}
@@ -248,7 +259,7 @@ class Mapper():
             product = product.strip()
             product = json.loads(product)
         except Exception as e:
-            return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
+            return None
 
         if self.TABLE_NAME == "products":
             results = self.generate_key_val_pair(product)
@@ -264,7 +275,7 @@ class Mapper():
             res = self.print_keypair_for_mv(row)
             if len(res) > 0: return res
 
-        return (binascii.hexlify(pickle.dumps([], protocol=2)).decode(), 0)
+        return None
 
 if __name__ == "__main__":
     m = Mapper(*pickle.loads(binascii.unhexlify(sys.argv[1].encode())))

@@ -47,29 +47,29 @@ def get_mapper_args(parsed):
     ]
 
 
-def run_mapper_process(parsed):
-    mapper_cmd = binascii.hexlify(pickle.dumps(get_mapper_args(parsed), protocol = 2)).decode()
+# def run_mapper_process(parsed):
+#     mapper_cmd = binascii.hexlify(pickle.dumps(get_mapper_args(parsed), protocol = 2)).decode()
     
-    map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    map_pipe_process = Popen(["python3", "mapper.py", mapper_cmd], stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
+#     map_process_temp = Popen(["cat", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+#     map_pipe_process = Popen(["python3", "mapper.py", mapper_cmd], stdin=map_process_temp.stdout, stdout=PIPE, stderr=PIPE)
 
-    mapper_output, err = map_pipe_process.communicate()
-    map_process_temp.stdout.close() 
+#     mapper_output, err = map_pipe_process.communicate()
+#     map_process_temp.stdout.close() 
 
-    rc_m = map_pipe_process.returncode
-    print("Error in mapper: ", err, 'return code: ', rc_m)
-    return mapper_output
+#     rc_m = map_pipe_process.returncode
+#     print("Error in mapper: ", err, 'return code: ', rc_m)
+#     return mapper_output
 
-def run_reducer_process(parsed):
-    reducer_cmd = binascii.hexlify(pickle.dumps(get_reducer_args(parsed), protocol = 2)).decode()
+# def run_reducer_process(parsed):
+#     reducer_cmd = binascii.hexlify(pickle.dumps(get_reducer_args(parsed), protocol = 2)).decode()
     
-    reducer_temp_process = Popen(['cat', 'reducer_inp.txt'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    reducer_pipe_process = Popen(["python3", "reducer_test.py", reducer_cmd], stdin=reducer_temp_process.stdout, stdout=PIPE)
-    reducer_output, err = reducer_pipe_process.communicate()
-    reducer_temp_process.stdout.close() 
-    rc_m = reducer_pipe_process.returncode
-    print("Error in reducer: ", err, 'return code: ', rc_m)
-    return reducer_output
+#     reducer_temp_process = Popen(['cat', 'reducer_inp.txt'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+#     reducer_pipe_process = Popen(["python3", "reducer_test.py", reducer_cmd], stdin=reducer_temp_process.stdout, stdout=PIPE)
+#     reducer_output, err = reducer_pipe_process.communicate()
+#     reducer_temp_process.stdout.close() 
+#     rc_m = reducer_pipe_process.returncode
+#     print("Error in reducer: ", err, 'return code: ', rc_m)
+#     return reducer_output
 
 def reducer_operation(func, a, b):
     if func.lower() == "max":
@@ -125,6 +125,9 @@ def get_hadoop_steam_cmd(mapper_arggs_str, reducer_arggs_str
     return MAP_REDUCE_CMD
 
 def split_spark_mapper_results(line):
+    if line is None:
+        print("line is None")
+        return []
     if isinstance(line, tuple):
         return [line,]
     else: return line

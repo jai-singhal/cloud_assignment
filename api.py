@@ -16,7 +16,8 @@ from utils import *
 
 # http://www.java2s.com/Code/Jar/h/Downloadhadoopstreamingjar.htm
 
-INPUT_FILE_NAME = "data/test.txt"
+INPUT_FILE_NAME = "data/amazon-meta-processed.txt"
+INPUT_FILE_NAME = "data/amazon-meta-processed.txt"
 
 """
 SELECT <COLUMNS>, FUNC(COLUMN1)
@@ -65,7 +66,7 @@ def run_spark_process(parsed):
     return to_return
 
 def mapper_inp():
-    map_in = Popen(["head","10", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    map_in = Popen(["head", "-n", "2", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     output,err=map_in.communicate()
     return output.decode().split('\n')
 
@@ -131,19 +132,19 @@ async def main(query: Query):
         return {
             "error": "Table can only be reviews, products",
         }
-    # try:
-    map_input=mapper_inp()
+    # to return dummy out
     map_output=run_mapper_process(parsed)
-    tick = time.time()
-    map_red_out = run_map_reduce(parsed)
-    tock = time.time()
-    mapred_time = tock-tick
 
-    # except Exception as e:
-    #     return {
-    #         "error": "Error in executing map reduce Job",
-    #         "e": str(e)
-    #     }
+    try:
+        tick = time.time()
+        map_red_out = run_map_reduce(parsed)
+        tock = time.time()
+        mapred_time = tock-tick
+    except Exception as e:
+        return {
+            "error": "Error in executing map reduce Job",
+            "e": str(e)
+        }
         
     try:
         spark_out = run_spark_process(parsed)
@@ -164,12 +165,12 @@ async def main(query: Query):
         "spark_job_time": "{:.3f} sec".format(spark_time),
         "map_reduce_job_format":{
             "mapper":{
-                "input": map_input,
-                "output": map_output
+                "input": mapper_inp()[0:3],
+                "output": map_output[0:2]
             },
             "reducer":{
-                "input": map_output,
-                "output": map_red_out
+                "input": map_output[0:2],
+                "output": map_red_out[0:2]
             }
         },
         "spark_job_format":{
