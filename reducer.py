@@ -1,24 +1,26 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """reducer.py"""
-from __future__ import print_function
-from operator import itemgetter
-import sys
+
 import ast
-from operator import lt,gt,eq,le,ge,ne
-import pickle
 import binascii
+import pickle
+import sys
+from operator import eq, ge, gt, itemgetter, le, lt, ne
 
 current_columns = None
-current_val= None
+minval = -sys.maxsize - 1
+maxval = sys.maxsize 
+current_max = minval
+current_min = maxval
 columns = None
-sumval=0
-## https://github.com/zonca/python-wordcount-hadoop/blob/master/reducer.py
 
-#key2val={}
 
-fun = sys.argv[1].upper()
-x = float(sys.argv[2])
-operation=sys.argv[3].lower()
+key2val={}
+
+fun, x, operation = pickle.loads(binascii.unhexlify(sys.argv[1].encode()))
+fun = fun.upper()
+x = float(x)
+operation=operation.lower()
 
 if operation=="lt":
     sign = lt
@@ -30,17 +32,17 @@ elif operation == "lte":
     sign = le
 elif operation=="gte":
     sign = ge
-elif operation=="ne":
+elif operation=="neq":
     sign = ne
 else:
     print("Invalid comparison operator provided. Using \"greater than\" as default.")
     sign = gt
-    
-  
-    
 for line in sys.stdin:
     line = line.strip().split("\t")
+        #line=ast.literal_eval(line)
+
     columns,column1 = line[0],line[1]
+
 
     try:
         column1 = float(column1)
@@ -48,54 +50,36 @@ for line in sys.stdin:
         print(e)
         continue
     if fun=='MAX':
-      	if current_columns == columns:
-            current_val= max(current_val, column1)
-        else:
-            if current_columns:
-                if sign(current_val, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print("%s\t%s" %(str(mykey), column1))
-            current_val = column1
-            current_columns = columns
+        try:
+            key2val[str(columns)]=max(key2val[str(columns)],column1)
+        except Exception as e:
+            key2val[str(columns)]=column1
 
     elif fun=='MIN':
-        if current_columns == columns:
-            current_val= min(current_val, column1)
-        else:
-            if current_columns:
-                if sign(current_val, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print("%s\t%s" %(str(mykey), column1))
-            current_val = column1
-            current_columns = columns
+        try:
+            key2val[str(columns)]=min(key2val[str(columns)],column1)
+        except:
+            key2val[str(columns)]=column1
+
 
     elif fun=='SUM':
 
-        if current_columns == columns:
-            current_val= sumval+column1
-        else:
-            if current_columns:
-                if sign(current_val, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print("%s\t%s" %(str(mykey), column1))
-            sumval = column1
-            current_columns = columns
+        try:
+            key2val[str(columns)]=key2val[str(columns)]+column1
+        except:
+            key2val[str(columns)]=column1
 
     elif fun=='COUNT':
-        if current_columns == columns:
-            current_val= sumval+1
-        else:
-            if current_columns:
-                if sign(current_val, x):
-                    mykey=pickle.loads(binascii.unhexlify(current_columns))
-                    print("%s\t%s" %(str(mykey), column1))
-            sumval = column1
-            current_columns = columns
-            
-if current_columns==columns:
-    if(sign(current_val,x)):
-            mykey=pickle.loads(binascii.unhexlify(current_columns))
-            print("%s\t%s" %(str(mykey), column1))
+        try:
+            key2val[str(columns)]=key2val[str(columns)]+1
+        except:
+            key2val[str(columns)]=1
 
+
+for col in key2val.keys():
+    if sign(key2val[col],x):
+       
+        mykey=pickle.loads(binascii.unhexlify(col)) #yet to test
+        print("  |  ".join(str(v) for v in mykey)," ------",str(key2val[col]).strip("\t"))
 
     

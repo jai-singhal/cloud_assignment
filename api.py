@@ -17,7 +17,7 @@ from utils import *
 # http://www.java2s.com/Code/Jar/h/Downloadhadoopstreamingjar.htm
 
 INPUT_FILE_NAME = "data/amazon-meta-processed.txt"
-INPUT_FILE_NAME = "data/amazon-meta-processed.txt"
+# INPUT_FILE_NAME = "data/amazon-meta-processed.txt"
 
 """
 SELECT <COLUMNS>, FUNC(COLUMN1)
@@ -66,9 +66,12 @@ def run_spark_process(parsed):
     return to_return
 
 def mapper_inp():
-    map_in = Popen(["head", "-n", "2", "data/test.txt"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output,err=map_in.communicate()
-    return output.decode().split('\n')
+    to_ret = []
+    with open("data/test.txt", "r") as fin:
+        for i in range(5):
+            line = fin.readline().strip("\n \t")
+            to_ret.append(line)
+    return to_ret
 
 def run_mapper_process(parsed):
     mapper_cmd = binascii.hexlify(pickle.dumps(get_mapper_args(parsed), protocol = 2)).decode()
@@ -165,7 +168,7 @@ async def main(query: Query):
         "spark_job_time": "{:.3f} sec".format(spark_time),
         "map_reduce_job_format":{
             "mapper":{
-                "input": mapper_inp()[0:3],
+                "input": mapper_inp()[1:2],
                 "output": map_output[0:2]
             },
             "reducer":{

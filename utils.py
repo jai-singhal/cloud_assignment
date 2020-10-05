@@ -109,9 +109,9 @@ def get_hadoop_steam_cmd(mapper_arggs_str, reducer_arggs_str
         -mapper
         mapper.py {mapper_arggs_str}
         -file 
-        reducer_test.py 
+        reducer.py 
         -reducer
-        reducer_test.py {reducer_arggs_str}
+        reducer.py {reducer_arggs_str}
         -input
         {INPUT_FILE_NAME}
         -output
